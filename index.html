@@ -445,7 +445,7 @@
 <body>
 
 <div class="hearts-bloom" id="heartsBloom"></div>
-<audio id="bgMusic" src="music.mp3" loop autoplay preload="metadata"></audio>
+<audio id="bgMusic" src="music.mp3" loop preload="auto"></audio>
 <button class="music-btn" id="musicBtn" title="音乐">
   <span class="note-icon">♪</span>
   <span class="bars"><span></span><span></span><span></span><span></span></span>
@@ -561,6 +561,11 @@
     if (hashHex === PW_HASH) {
       sessionStorage.setItem('_xxy_auth', '1');
       pwGate.classList.add('unlocked');
+      // 密码正确时触发音乐（此时有用户点击手势，浏览器允许播放）
+      const bgMusic = document.getElementById('bgMusic');
+      const musicBtn = document.getElementById('musicBtn');
+      bgMusic.volume = 0.55;
+      bgMusic.play().then(() => { musicBtn.classList.add('playing'); }).catch(() => {});
     } else {
       pwError.textContent = '密码不对哦';
       pwInput.value = '';
