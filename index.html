@@ -389,6 +389,57 @@
     .cat-card{flex:0 1 100%;max-width:320px;}
     .scattered-wall{padding:16px 4px 60px;}
   }
+
+  /* ===== PASSWORD GATE ===== */
+  .pw-gate{
+    position:fixed;inset:0;z-index:9999;
+    display:flex;align-items:center;justify-content:center;
+    transition:opacity 0.6s ease,visibility 0.6s ease;
+    will-change:opacity;
+  }
+  .pw-gate.unlocked{opacity:0;visibility:hidden;pointer-events:none;}
+  .pw-bg{
+    position:absolute;inset:-30px;background-size:cover;background-position:center;
+    background-repeat:no-repeat;z-index:0;filter:brightness(0.35) saturate(0.6) blur(8px);
+  }
+  .pw-vignette{
+    position:absolute;inset:0;z-index:1;
+    background:radial-gradient(ellipse at center,transparent 20%,rgba(30,18,10,0.4) 55%,rgba(20,10,5,0.8) 100%);
+  }
+  .pw-card{
+    position:relative;z-index:2;text-align:center;padding:48px 32px;
+    background:rgba(255,254,251,0.08);border:1px solid rgba(255,255,255,0.1);
+    border-radius:16px;backdrop-filter:blur(20px);
+    -webkit-backdrop-filter:blur(20px);
+    box-shadow:0 8px 40px rgba(0,0,0,0.3);
+    animation:pwFloat 4s ease-in-out infinite;
+  }
+  @keyframes pwFloat{
+    0%,100%{transform:translateY(0);}
+    50%{transform:translateY(-6px);}
+  }
+  .pw-card .pw-hearts{font-size:0.8rem;letter-spacing:8px;opacity:0.5;margin-bottom:12px;color:#f0ddd0;}
+  .pw-card h2{font-size:clamp(2rem,5vw,3rem);font-weight:400;letter-spacing:8px;color:#faf6f0;margin-bottom:8px;}
+  .pw-card .pw-sub{font-size:0.75rem;letter-spacing:4px;color:rgba(240,220,210,0.5);margin-bottom:28px;}
+  .pw-input-row{
+    display:flex;align-items:center;justify-content:center;gap:0;
+    background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.15);
+    border-radius:50px;overflow:hidden;padding:0 0 0 20px;
+    transition:border-color 0.3s;
+  }
+  .pw-input-row:focus-within{border-color:rgba(220,170,150,0.5);}
+  .pw-input-row input{
+    background:none;border:none;outline:none;color:#faf6f0;font-size:0.95rem;
+    font-family:inherit;letter-spacing:3px;width:180px;padding:12px 0;
+  }
+  .pw-input-row input::placeholder{color:rgba(240,220,210,0.3);letter-spacing:2px;}
+  .pw-input-row button{
+    background:rgba(220,170,150,0.2);border:none;color:#e8d0c0;
+    font-size:1.2rem;width:48px;height:44px;cursor:pointer;
+    transition:all 0.3s;font-family:inherit;
+  }
+  .pw-input-row button:hover{background:rgba(220,170,150,0.4);color:#faf6f0;}
+  .pw-error{font-size:0.65rem;letter-spacing:2px;color:rgba(255,150,130,0.7);margin-top:12px;min-height:18px;transition:opacity 0.3s;}
 </style>
 </head>
 <body>
@@ -399,6 +450,22 @@
   <span class="note-icon">♪</span>
   <span class="bars"><span></span><span></span><span></span><span></span></span>
 </button>
+
+<!-- ==================== PASSWORD GATE ==================== -->
+<div class="pw-gate" id="pwGate">
+  <div class="pw-bg" id="pwBg"></div>
+  <div class="pw-vignette"></div>
+  <div class="pw-card">
+    <p class="pw-hearts">♡ ✦ ♡</p>
+    <h2>我们俩</h2>
+    <p class="pw-sub">属于我们的秘密空间</p>
+    <div class="pw-input-row">
+      <input type="password" id="pwInput" placeholder="输入密码" maxlength="20" autocomplete="off">
+      <button id="pwBtn">↵</button>
+    </div>
+    <p class="pw-error" id="pwError"></p>
+  </div>
+</div>
 
 <!-- ==================== LAYER 1: INTRO ==================== -->
 <div class="layer-intro" id="layerIntro">
@@ -469,6 +536,43 @@
 <script>
 (function() {
   const PHOTO_DIR = '照片/opt';
+
+  // ===== PASSWORD GATE =====
+  const PW_HASH = '4ce3aee36d9ed2ea370fb8f6a311981e7d30f59f235b326907d47aa6aeb6b9e7';
+  const pwGate = document.getElementById('pwGate');
+  const pwInput = document.getElementById('pwInput');
+  const pwBtn = document.getElementById('pwBtn');
+  const pwError = document.getElementById('pwError');
+
+  // Already unlocked this session
+  if (sessionStorage.getItem('_xxy_auth') === '1') {
+    pwGate.classList.add('unlocked');
+  }
+
+  async function tryUnlock() {
+    const val = pwInput.value.trim();
+    if (!val) return;
+    // Hash input with SHA-256
+    const data = new TextEncoder().encode(val);
+    const hashBuf = await crypto.subtle.digest('SHA-256', data);
+    const hashArr = Array.from(new Uint8Array(hashBuf));
+    const hashHex = hashArr.map(b => b.toString(16).padStart(2, '0')).join('');
+
+    if (hashHex === PW_HASH) {
+      sessionStorage.setItem('_xxy_auth', '1');
+      pwGate.classList.add('unlocked');
+    } else {
+      pwError.textContent = '密码不对哦';
+      pwInput.value = '';
+      pwInput.focus();
+    }
+  }
+
+  pwBtn.addEventListener('click', tryUnlock);
+  pwInput.addEventListener('keydown', e => {
+    if (e.key === 'Enter') tryUnlock();
+    pwError.textContent = '';
+  });
 
   const allFiles = [
     "微信图片_20260623114455_2_53.jpg",
@@ -644,7 +748,12 @@
   };
   const BG_INDEX = 163;
 
-  // Favorite photos by filename number: _8_, _15_, _37_, _53_, _91_, _104_, _117_
+  // Password gate & intro backgrounds
+  const bgUrl = `${PHOTO_DIR}/${allFiles[BG_INDEX]}`;
+  document.getElementById('pwBg').style.backgroundImage = `url(${bgUrl})`;
+  document.getElementById('introBg').style.backgroundImage = `url(${bgUrl})`;
+
+  // Favorite photos
   const FAVE_INDICES = new Set([7,14,33,49,87,100,113]);
 
   function isFave(idx){return FAVE_INDICES.has(idx);}
@@ -671,7 +780,6 @@
   });
 
   // ===== LAYER 1: INTRO =====
-  document.getElementById('introBg').style.backgroundImage=`url(${PHOTO_DIR}/${allFiles[BG_INDEX]})`;
 
   const layerIntro=document.getElementById('layerIntro'),scrollPrompt=document.getElementById('scrollPrompt'),
         heartsBloom=document.getElementById('heartsBloom');
