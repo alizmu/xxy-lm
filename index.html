@@ -1,0 +1,1711 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script>
+var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "https://hm.baidu.com/hm.js?f64cf275ee649f5533914537a0b17ce5";
+  var s = document.getElementsByTagName("script")[0];
+  s.parentNode.insertBefore(hm, s);
+})();
+</script>
+<title>我们俩</title>
+<!-- 照片已加密为 enc/*.bin，无法用 <link rel=preload> 预加载。
+     密码页背景改用内联的低清模糊图（PW_BG），看不出内容也不额外发请求。 -->
+<style>
+  *,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+  html{scroll-behavior:smooth;background:#120c09;}
+  body{
+    font-family:'Georgia','Noto Serif SC','STSong','PingFang SC','Microsoft YaHei',serif;
+    background:#faf6f0;color:#4a3530;overflow-x:hidden;-webkit-font-smoothing:antialiased;cursor:default;
+  }
+
+  /* ===== 未解锁前，整站内容完全不渲染 =====
+     目的1：隐私 —— 照片不会被"看透"
+     目的2：性能 —— 浏览器不会提前去下载 160+ 张照片 */
+  #siteContent.site-locked{display:none!important;}
+
+  /* ===== LAYER 1: INTRO ===== */
+  .layer-intro{
+    position:fixed;inset:0;z-index:100;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    transition:transform 1s cubic-bezier(0.76,0,0.24,1),opacity 1s ease;
+    will-change:transform,opacity;
+  }
+  .layer-intro.dismissed{transform:translateY(-100%);opacity:0;pointer-events:none;}
+
+  .intro-bg{
+    position:absolute;inset:-30px;background-size:cover;background-position:center;
+    background-repeat:no-repeat;z-index:0;filter:brightness(0.5) saturate(0.8);
+  }
+  .intro-vignette{
+    position:absolute;inset:0;z-index:1;
+    background:radial-gradient(ellipse at center,transparent 35%,rgba(250,246,240,0.2) 55%,rgba(250,246,240,0.5) 75%,rgba(250,246,240,0.85) 100%);
+  }
+
+  .intro-text{position:relative;z-index:2;text-align:center;padding:0 24px;}
+  .intro-text .mini-hearts{font-size:0.8rem;letter-spacing:8px;opacity:0.6;margin-bottom:16px;}
+  .intro-text h1{font-size:clamp(3rem,10vw,6rem);font-weight:400;letter-spacing:10px;color:#faf6f0;text-shadow:0 2px 30px rgba(0,0,0,0.4);line-height:1.2;}
+  .intro-text .subtitle{font-size:0.85rem;letter-spacing:6px;color:rgba(250,246,240,0.65);margin-top:12px;}
+
+  .scroll-prompt{
+    position:absolute;bottom:54px;z-index:2;display:flex;flex-direction:column;
+    align-items:center;gap:10px;cursor:pointer;animation:floatPrompt 2.5s ease-in-out infinite;
+  }
+  .scroll-prompt span{font-size:0.65rem;letter-spacing:5px;color:rgba(250,246,240,0.5);}
+  .scroll-prompt .line{width:1px;height:36px;background:linear-gradient(to bottom,rgba(250,246,240,0.25),transparent);}
+
+  /* Floating decor on intro */
+  .intro-decor{
+    position:absolute;z-index:2;pointer-events:none;
+    font-size:1.4rem;animation:gentleFloat 4s ease-in-out infinite;
+    color:rgba(255,240,230,0.8);
+    text-shadow:0 0 8px rgba(255,220,200,0.5);
+  }
+  .intro-decor:nth-child(1){top:12%;left:10%;}
+  .intro-decor:nth-child(2){top:18%;right:12%;animation-delay:0.8s;font-size:1rem;}
+  .intro-decor:nth-child(3){bottom:25%;left:15%;animation-delay:1.6s;font-size:1.8rem;}
+  .intro-decor:nth-child(4){bottom:20%;right:10%;animation-delay:2.4s;}
+  .intro-decor:nth-child(5){top:40%;left:8%;animation-delay:3.2s;font-size:1.1rem;}
+  .intro-decor:nth-child(6){top:35%;right:8%;animation-delay:1.2s;font-size:1.6rem;}
+
+  @keyframes gentleFloat{
+    0%,100%{transform:translateY(0) rotate(0deg);}
+    25%{transform:translateY(-12px) rotate(5deg);}
+    75%{transform:translateY(6px) rotate(-3deg);}
+  }
+  @keyframes floatPrompt{0%,100%{transform:translateY(0);}50%{transform:translateY(8px);}}
+
+  /* ===== HEARTS BLOOM ===== */
+  .hearts-bloom{position:fixed;inset:0;pointer-events:none;z-index:9999;}
+  @keyframes heartBloom{
+    0%{opacity:0;transform:translate(0,0) scale(0) rotate(0deg);}
+    15%{opacity:1;transform:translate(var(--bx),var(--by)) scale(1.2) rotate(var(--rr));}
+    100%{opacity:0;transform:translate(var(--ex),var(--ey)) scale(0.1) rotate(var(--er));}
+  }
+
+  /* ===== LAYER 2: CATEGORIES ===== */
+  .layer-categories{
+    position:relative;z-index:10;min-height:100vh;
+    background:radial-gradient(ellipse at 20% 30%,rgba(230,200,180,0.25) 0%,transparent 60%),
+               radial-gradient(ellipse at 80% 70%,rgba(220,190,200,0.2) 0%,transparent 60%),
+               linear-gradient(180deg,#faf6f0 0%,#f5efe6 50%,#faf6f0 100%);
+    padding:100px 32px 80px;display:flex;flex-direction:column;align-items:center;
+  }
+  .layer-categories .section-title{text-align:center;margin-bottom:56px;position:relative;}
+  .layer-categories .section-title h2{font-size:clamp(1.8rem,3vw,2.4rem);font-weight:400;letter-spacing:5px;color:#5a3e36;}
+  .layer-categories .section-title h2.visible{
+    animation:titleReveal 1s cubic-bezier(0.25,0.46,0.45,0.94) forwards;
+  }
+  @keyframes titleReveal{
+    from{opacity:0;transform:translateY(20px);letter-spacing:15px;}
+    to{opacity:1;transform:translateY(0);letter-spacing:5px;}
+  }
+  .layer-categories .section-title .decorated-line{display:flex;align-items:center;justify-content:center;gap:10px;margin-top:14px;}
+  .layer-categories .section-title .decorated-line.visible{
+    animation:lineGrow 0.8s 0.3s cubic-bezier(0.25,0.46,0.45,0.94) forwards;
+  }
+  @keyframes lineGrow{
+    from{opacity:0;transform:scaleX(0);}
+    to{opacity:1;transform:scaleX(1);}
+  }
+  .layer-categories .section-title .decorated-line::before,
+  .layer-categories .section-title .decorated-line::after{content:'';width:28px;height:1px;background:#c9a794;}
+  .layer-categories .section-title .decorated-line span{font-size:0.6rem;color:#c9a794;}
+
+  .categories-row{display:flex;gap:50px;max-width:1200px;width:100%;justify-content:center;flex-wrap:wrap;padding:0 20px;position:relative;}
+
+  .margin-decor{position:absolute;pointer-events:none;z-index:1;font-size:1.3rem;opacity:0.3;animation:gentleFloat 5s ease-in-out infinite;}
+
+  /* Category card */
+  .cat-card{
+    flex:0 1 340px;max-width:370px;min-width:280px;cursor:pointer;position:relative;
+    background:#fffefb;padding:16px 16px 50px 16px;
+    box-shadow:3px 5px 18px rgba(0,0,0,0.08),1px 2px 6px rgba(0,0,0,0.04);
+    transform:rotate(var(--rot,0deg));
+    transition:transform 0.5s cubic-bezier(0.25,0.46,0.45,0.94),box-shadow 0.5s ease,z-index 0.5s;
+    z-index:1;opacity:0;transform:translateY(50px) rotate(var(--rot,0deg));
+  }
+  .cat-card:hover{transform:translateY(-12px) rotate(0deg) scale(1.04)!important;box-shadow:8px 16px 40px rgba(0,0,0,0.12);z-index:10;}
+  .cat-card.visible{opacity:1;transform:translateY(0) rotate(var(--rot,0deg));}
+
+  .cat-card .tape{position:absolute;z-index:3;width:60px;height:18px;opacity:0.55;border-radius:2px;pointer-events:none;}
+  .cat-card .tape.tl{top:-8px;left:20px;transform:rotate(-3deg);}
+  .cat-card .tape.tr{top:-8px;right:20px;transform:rotate(2deg);}
+  .cat-card .tape.bl{bottom:40px;left:16px;transform:rotate(1deg);}
+  .cat-card .tape.br{bottom:40px;right:16px;transform:rotate(-2deg);}
+
+  .cat-card .carousel{position:relative;width:100%;aspect-ratio:4/5;overflow:hidden;background:#ede4da;}
+  .cat-card .carousel img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity 1s ease;}
+  .cat-card .carousel img.active{opacity:1;}
+
+  .cat-card .paperclip{position:absolute;top:-6px;right:32px;z-index:4;font-size:2rem;opacity:0.5;filter:grayscale(0.3);pointer-events:none;transform:rotate(15deg);}
+
+  .cat-card .card-label{text-align:center;padding-top:20px;position:relative;}
+  .cat-card .card-label .chapter{font-size:0.6rem;letter-spacing:4px;color:#c9a794;margin-bottom:4px;}
+  .cat-card .card-label h3{font-size:1.4rem;font-weight:400;letter-spacing:3px;color:#5a3e36;margin-bottom:4px;}
+  .cat-card .card-label .count{font-size:0.7rem;letter-spacing:2px;color:#b8a094;}
+  .cat-card .card-label .tap-hint{margin-top:10px;font-size:0.65rem;letter-spacing:2px;color:#c9a794;opacity:0;transform:translateY(4px);transition:all 0.4s ease;}
+  .cat-card:hover .card-label .tap-hint{opacity:1;transform:translateY(0);}
+
+  /* ===== LAYER 3 BACKGROUND DECOR ===== */
+  .bg-text{
+    position:absolute;pointer-events:none;user-select:none;z-index:0;
+    font-family:'Georgia','Noto Serif SC','PingFang SC',serif;
+    animation:bgFloat 8s ease-in-out infinite;
+    white-space:nowrap;
+  }
+  @keyframes bgFloat{
+    0%,100%{transform:translateY(0) rotate(var(--dr,0deg));}
+    25%{transform:translateY(-6px) rotate(calc(var(--dr,0deg) + 2deg));}
+    75%{transform:translateY(4px) rotate(calc(var(--dr,0deg) - 2deg));}
+  }
+
+  /* ===== LAYER 3: SCATTERED POLAROIDS ===== */
+  .gallery-overlay{
+    position:fixed;inset:0;z-index:200;background:rgba(40,25,20,0.94);
+    display:flex;flex-direction:column;
+    opacity:0;pointer-events:none;transition:opacity 0.5s ease;
+    overflow-y:auto;overflow-x:hidden;
+  }
+  .gallery-overlay.active{opacity:1;pointer-events:auto;}
+
+  .gallery-overlay .overlay-header{
+    position:sticky;top:0;z-index:50;display:flex;align-items:center;justify-content:space-between;
+    padding:16px 24px;background:linear-gradient(to bottom,rgba(40,25,20,0.98) 50%,rgba(40,25,20,0) 100%);
+  }
+  .gallery-overlay .back-btn{
+    display:flex;align-items:center;gap:6px;
+    background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);
+    color:#d4b8a8;padding:8px 18px;border-radius:50px;cursor:pointer;
+    font-family:inherit;font-size:0.75rem;letter-spacing:2px;transition:all 0.3s;
+  }
+  .gallery-overlay .back-btn:hover{border-color:rgba(212,184,168,0.4);background:rgba(255,255,255,0.1);color:#f0ddd0;}
+
+  .gallery-overlay .overlay-title{text-align:center;}
+  .gallery-overlay .overlay-title h3{font-size:1.2rem;font-weight:400;letter-spacing:4px;color:#f0ddd0;}
+  .gallery-overlay .overlay-title span{font-size:0.65rem;letter-spacing:3px;color:rgba(212,184,168,0.5);}
+
+  /* Scattered wall — organic flex layout */
+  .scattered-wall{
+    display:flex;flex-wrap:wrap;
+    justify-content:center;
+    align-items:center;
+    padding:24px 16px 90px;
+    max-width:2000px;margin:0 auto;width:100%;
+    position:relative;
+  }
+
+  .polaroid{
+    cursor:pointer;
+    transition:transform 0.35s cubic-bezier(0.25,0.46,0.45,0.94),z-index 0.2s,box-shadow 0.35s ease;
+    position:relative;
+    z-index:var(--zi,1);
+    opacity:0;
+    animation:polaroidIn 0.7s ease forwards;
+    animation-delay:var(--ad,0s);
+    margin-left:var(--ml,6px);
+    margin-right:var(--mr,6px);
+    margin-top:var(--mt,8px);
+    margin-bottom:var(--mb,8px);
+    /* Polaroid: equal top/left/right, wider bottom */
+    background:linear-gradient(180deg,#fefdfb 0%,#fcfaf6 100%);
+    padding:var(--pad) var(--pad) calc(var(--pad)*3) var(--pad);
+    box-shadow:
+      0 1px 2px rgba(0,0,0,0.04),
+      0 3px 8px rgba(0,0,0,0.08),
+      0 6px 16px rgba(0,0,0,0.06);
+    border-radius:3px;
+  }
+  .polaroid img{
+    display:block;
+    width:var(--pw);
+    height:auto;
+    position:relative;
+    z-index:0;
+    border-radius:1px;
+  }
+  /* Bottom area: tiny hearts */
+  .polaroid::after{
+    content:'♡ ♡ ♡';
+    position:absolute;
+    bottom:calc(var(--pad)*0.9);
+    left:0;right:0;
+    text-align:center;
+    font-size:max(7px, calc(var(--pad)*0.45));
+    color:#e0b8b0;
+    letter-spacing:1px;
+    pointer-events:none;
+    z-index:1;
+    opacity:0.65;
+  }
+  .polaroid:hover{
+    transform:rotate(0deg) scale(1.07)!important;z-index:250!important;
+    box-shadow:
+      0 2px 6px rgba(0,0,0,0.08),
+      0 8px 20px rgba(0,0,0,0.12),
+      0 14px 36px rgba(0,0,0,0.10);
+  }
+
+  @keyframes polaroidIn{
+    from{opacity:0;transform:translateY(30px) rotate(var(--rot,0deg)) scale(0.85);}
+    to{opacity:1;transform:translateY(var(--ty,0px)) rotate(var(--rot,0deg)) scale(1);}
+  }
+
+  /* ===== LAYER 4: PAGE TURN / ENDING ===== */
+  .layer-ending{
+    position:fixed;inset:0;z-index:400;
+    background:#1a1512;
+    display:flex;align-items:center;justify-content:center;
+    opacity:0;pointer-events:none;
+    transition:opacity 0.7s ease;
+  }
+  .layer-ending.active{opacity:1;pointer-events:auto;}
+
+  /* Curtain panels for page turn */
+  #endingCurtain{
+    position:fixed;top:0;height:100vh;width:50%;z-index:401;pointer-events:none;
+    transition:transform 0.8s cubic-bezier(0.76,0,0.24,1);will-change:transform;
+    display:none;
+  }
+  #endingCurtain .curtain-panel{
+    position:absolute;top:0;height:100%;width:100%;
+  }
+  #endingCurtain .curtain-panel.left{left:0;background:linear-gradient(135deg,#3a2a22 0%,#2a1c16 40%,#1f1410 100%);}
+  #endingCurtain .curtain-panel.right{right:0;background:linear-gradient(225deg,#3a2a22 0%,#2a1c16 40%,#1f1410 100%);}
+  #endingCurtain.open .curtain-panel.left{transform:translateX(-100%);}
+  #endingCurtain.open .curtain-panel.right{transform:translateX(100%);}
+
+  .ending-content{
+    text-align:center;padding:40px;z-index:402;
+    opacity:0;transform:translateY(30px);
+    transition:opacity 0.8s 0.4s ease,transform 0.8s 0.4s ease;
+  }
+  .layer-ending.active .ending-content{opacity:1;transform:translateY(0);}
+
+  .ending-content .ornament{font-size:2rem;opacity:0.5;margin-bottom:24px;display:block;}
+  .ending-content h2{font-size:clamp(2rem,5vw,3.5rem);font-weight:400;letter-spacing:8px;color:#e8dcd4;margin-bottom:16px;}
+  .ending-content .divider{width:40px;height:1px;background:rgba(200,160,140,0.5);margin:0 auto 20px;}
+  .ending-content .message{
+    font-size:0.9rem;letter-spacing:4px;color:rgba(200,160,140,0.6);line-height:2;
+    max-width:500px;margin:0 auto;
+  }
+  .ending-content .placeholder{
+    margin-top:30px;padding:20px 30px;border:1px dashed rgba(200,160,140,0.25);
+    border-radius:4px;display:inline-block;
+    font-size:0.7rem;letter-spacing:3px;color:rgba(200,160,140,0.35);
+  }
+  .ending-content .back-link{
+    margin-top:40px;display:inline-block;
+    background:none;border:1px solid rgba(200,160,140,0.3);
+    color:#c8a08c;padding:10px 28px;border-radius:50px;cursor:pointer;
+    font-family:inherit;font-size:0.75rem;letter-spacing:3px;
+    transition:all 0.3s;
+  }
+  .ending-content .back-link:hover{background:rgba(200,160,140,0.08);border-color:rgba(200,160,140,0.5);}
+
+  /* ===== PHOTO VIEWER ===== */
+  .photo-viewer{
+    position:fixed;inset:0;z-index:300;
+    background:rgba(0,0,0,0.96);
+    display:flex;align-items:center;justify-content:center;
+    opacity:0;pointer-events:none;transition:opacity 0.35s ease;
+  }
+  .photo-viewer.active{opacity:1;pointer-events:auto;}
+  .photo-viewer img{max-width:92vw;max-height:90vh;border-radius:3px;box-shadow:0 20px 60px rgba(0,0,0,0.6);transition:opacity 0.25s ease,transform 0.4s cubic-bezier(0.25,0.46,0.45,0.94);}
+  .photo-viewer img.switching{opacity:0;transform:scale(0.95);}
+  .photo-viewer.active img{transform:scale(1);opacity:1;}
+  .photo-viewer .close-btn{
+    position:absolute;top:24px;right:32px;width:44px;height:44px;border-radius:50%;
+    border:1px solid rgba(255,255,255,0.2);background:rgba(255,255,255,0.05);
+    color:#fff;font-size:1.5rem;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.3s;
+  }
+  .photo-viewer .close-btn:hover{background:rgba(255,255,255,0.12);}
+  .photo-viewer .nav-btn{
+    position:absolute;top:50%;transform:translateY(-50%);width:46px;height:46px;border-radius:50%;
+    border:1px solid rgba(255,255,255,0.15);background:rgba(0,0,0,0.4);
+    color:#fff;font-size:1.2rem;cursor:pointer;display:flex;align-items:center;justify-content:center;
+    transition:all 0.3s;z-index:2;
+  }
+  .photo-viewer .nav-btn:hover{background:rgba(255,255,255,0.1);}
+  .photo-viewer .nav-prev{left:20px;}.photo-viewer .nav-next{right:20px;}
+  .photo-viewer .page-turn-hint{
+    position:absolute;bottom:36px;right:50px;
+    font-size:0.65rem;letter-spacing:3px;color:rgba(255,255,255,0.25);
+    opacity:0;transition:opacity 0.3s;
+  }
+  .photo-viewer .page-turn-hint.visible{opacity:1;}
+
+  /* ===== MUSIC TOGGLE ===== */
+  .music-btn{
+    position:fixed;bottom:32px;right:32px;z-index:500;
+    width:48px;height:48px;border-radius:50%;
+    border:1px solid rgba(200,160,140,0.4);
+    background:rgba(30,16,12,0.7);
+    backdrop-filter:blur(10px);
+    -webkit-backdrop-filter:blur(10px);
+    color:#e8d0c0;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;
+    transition:all 0.3s ease;
+    box-shadow:0 4px 16px rgba(0,0,0,0.3);
+    font-size:1.2rem;
+  }
+  .music-btn:hover{
+    transform:scale(1.08);
+    border-color:rgba(220,180,160,0.6);
+    box-shadow:0 6px 24px rgba(0,0,0,0.4);
+  }
+  .music-btn.playing{
+    background:rgba(200,140,120,0.25);
+    border-color:rgba(220,160,140,0.6);
+    animation:musicPulse 2s ease-in-out infinite;
+  }
+  @keyframes musicPulse{
+    0%,100%{box-shadow:0 4px 16px rgba(0,0,0,0.3);}
+    50%{box-shadow:0 4px 24px rgba(200,140,120,0.5);}
+  }
+  .music-btn .bars{
+    display:none;gap:2px;align-items:flex-end;height:16px;
+  }
+  .music-btn.playing .note-icon{display:none;}
+  .music-btn.playing .bars{display:flex;}
+  .music-btn .bars span{
+    width:3px;background:#e8d0c0;border-radius:1px;
+    animation:barDance 0.8s ease-in-out infinite;
+  }
+  .music-btn .bars span:nth-child(1){height:8px;animation-delay:0s;}
+  .music-btn .bars span:nth-child(2){height:14px;animation-delay:0.15s;}
+  .music-btn .bars span:nth-child(3){height:10px;animation-delay:0.3s;}
+  .music-btn .bars span:nth-child(4){height:16px;animation-delay:0.45s;}
+  @keyframes barDance{
+    0%,100%{transform:scaleY(0.6);}
+    50%{transform:scaleY(1);}
+  }
+
+  /* ===== FOOTER ===== */
+  .layer-footer{text-align:center;padding:0 24px 70px;background:#faf6f0;position:relative;z-index:10;}
+  .layer-footer .end-heart{font-size:2rem;opacity:0.4;animation:heartbeat 1.5s ease-in-out infinite;display:inline-block;}
+  @keyframes heartbeat{0%,100%{transform:scale(1)}15%{transform:scale(1.1)}30%{transform:scale(1)}45%{transform:scale(1.07)}60%{transform:scale(1)}}
+  .layer-footer p{margin-top:10px;font-size:0.75rem;letter-spacing:4px;color:#c9a794;}
+
+  /* ===== RESPONSIVE ===== */
+  @media(max-width:768px){
+    .categories-row{gap:36px;}
+    .cat-card{flex:0 1 280px;min-width:240px;padding:12px 12px 40px 12px;}
+    .scattered-wall{padding:20px 8px 80px;}
+    .photo-viewer .nav-btn{width:36px;height:36px;}
+    .photo-viewer .nav-prev{left:8px;}.photo-viewer .nav-next{right:8px;}
+    #endingCurtain{display:none;}
+  }
+  @media(max-width:480px){
+    .categories-row{gap:28px;}
+    .cat-card{flex:0 1 100%;max-width:320px;}
+    .scattered-wall{padding:16px 4px 60px;}
+  }
+
+  /* ===== PASSWORD GATE ===== */
+  .pw-gate{
+    position:fixed;inset:0;z-index:9999;
+    display:flex;align-items:center;justify-content:center;
+    /* 关键：不透明底色。即使背景图还没下载完，也绝对不会透出后面的照片 */
+    background:#120c09;
+    transition:opacity 0.6s ease,visibility 0.6s ease;
+    will-change:opacity;
+  }
+  .pw-gate.unlocked{opacity:0;visibility:hidden;pointer-events:none;}
+  .pw-bg{
+    position:absolute;inset:-30px;background-size:cover;background-position:center;
+    background-repeat:no-repeat;z-index:0;filter:brightness(0.35) saturate(0.6) blur(8px);
+    transform:translateZ(0);
+  }
+  .pw-vignette{
+    position:absolute;inset:0;z-index:1;
+    background:radial-gradient(ellipse at center,transparent 20%,rgba(30,18,10,0.4) 55%,rgba(20,10,5,0.8) 100%);
+  }
+  .pw-card{
+    position:relative;z-index:2;text-align:center;padding:48px 32px;
+    /* 原为 rgba(255,254,251,0.08)+backdrop-filter:blur(20px)：
+       在微信/手机上 backdrop-filter 支持差且极耗性能，会整块变透明 → 直接改成不透明感的深色玻璃 */
+    background:rgba(30,19,13,0.72);border:1px solid rgba(255,255,255,0.14);
+    border-radius:16px;
+    box-shadow:0 8px 40px rgba(0,0,0,0.45);
+    animation:pwFloat 4s ease-in-out infinite;
+  }
+  @keyframes pwFloat{
+    0%,100%{transform:translateY(0);}
+    50%{transform:translateY(-6px);}
+  }
+  .pw-card .pw-hearts{font-size:0.8rem;letter-spacing:8px;opacity:0.5;margin-bottom:12px;color:#f0ddd0;}
+  .pw-card h2{font-size:clamp(2rem,5vw,3rem);font-weight:400;letter-spacing:8px;color:#faf6f0;margin-bottom:8px;}
+  .pw-card .pw-sub{font-size:0.75rem;letter-spacing:4px;color:rgba(240,220,210,0.5);margin-bottom:28px;}
+  .pw-input-row{
+    display:flex;align-items:center;justify-content:center;gap:0;
+    background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.15);
+    border-radius:50px;overflow:hidden;padding:0 0 0 20px;
+    transition:border-color 0.3s;
+  }
+  .pw-input-row:focus-within{border-color:rgba(220,170,150,0.5);}
+  .pw-input-row input{
+    background:none;border:none;outline:none;color:#faf6f0;font-size:0.95rem;
+    font-family:inherit;letter-spacing:3px;width:180px;padding:12px 0;
+  }
+  .pw-input-row input::placeholder{color:rgba(240,220,210,0.3);letter-spacing:2px;}
+  .pw-input-row button{
+    background:rgba(220,170,150,0.2);border:none;color:#e8d0c0;
+    font-size:1.2rem;width:48px;height:44px;cursor:pointer;
+    transition:all 0.3s;font-family:inherit;
+  }
+  .pw-input-row button:hover{background:rgba(220,170,150,0.4);color:#faf6f0;}
+  .pw-error{font-size:0.65rem;letter-spacing:2px;color:rgba(255,150,130,0.7);margin-top:12px;min-height:18px;transition:opacity 0.3s;}
+
+  /* ===== FAREWELL (after password) ===== */
+  .layer-farewell{
+    position:fixed;inset:0;z-index:9500;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    opacity:0;visibility:hidden;pointer-events:none;
+    transition:opacity 0.9s ease,visibility 0s linear 0.9s;
+  }
+  .layer-farewell.active{opacity:1;visibility:visible;transition:opacity 0.9s ease;}
+  .layer-farewell.dismissed{opacity:0;visibility:hidden;transition:opacity 1.2s ease,visibility 0s linear 1.2s;}
+  .farewell-bg{
+    position:absolute;inset:-30px;background-size:cover;background-position:center;
+    background-repeat:no-repeat;z-index:0;filter:brightness(0.42) saturate(0.7) blur(6px);
+  }
+  .farewell-vignette{
+    position:absolute;inset:0;z-index:1;
+    background:radial-gradient(ellipse at center,transparent 8%,rgba(28,15,7,0.45) 55%,rgba(15,8,4,0.88) 100%);
+  }
+  .farewell-particles{position:absolute;inset:0;z-index:1;overflow:hidden;pointer-events:none;}
+  .farewell-particle{position:absolute;top:-8vh;pointer-events:none;will-change:transform,opacity;animation:fallDrift linear infinite;}
+  @keyframes fallDrift{
+    0%{transform:translateY(-8vh) translateX(0) rotate(0deg);opacity:0;}
+    12%{opacity:var(--op,0.5);}
+    50%{transform:translateY(52vh) translateX(var(--sway,24px)) rotate(160deg);}
+    88%{opacity:var(--op,0.5);}
+    100%{transform:translateY(108vh) translateX(calc(var(--sway,24px)*-1)) rotate(340deg);opacity:0;}
+  }
+  .farewell-text{position:relative;z-index:2;text-align:center;padding:0 28px;max-width:760px;}
+  .farewell-line{
+    font-size:clamp(1.3rem,3.4vw,2rem);color:#f2e6d8;letter-spacing:4px;line-height:1.6;font-weight:400;
+    text-shadow:0 0 26px rgba(240,190,150,0.45);
+    transition:opacity 0.6s ease,transform 0.6s ease,filter 0.6s ease;
+  }
+  .farewell-line.emphasize{font-size:clamp(1.6rem,4.4vw,2.4rem);color:#ffd7b4;letter-spacing:6px;text-shadow:0 0 34px rgba(255,190,140,0.6);}
+  .farewell-line.leaving{opacity:0;transform:translateY(-14px);filter:blur(6px);}
+  .farewell-line .ch{opacity:0;animation:charIn 0.45s ease forwards;display:inline-block;}
+  @keyframes charIn{from{opacity:0;filter:blur(7px);transform:translateY(8px);}to{opacity:1;filter:blur(0);transform:translateY(0);}}
+
+  .dust{position:absolute;border-radius:50%;pointer-events:none;background:radial-gradient(circle,rgba(255,224,190,0.9) 0%,rgba(255,190,150,0) 70%);animation:twinkle ease-in-out infinite;}
+  @keyframes twinkle{0%,100%{opacity:0;transform:translateY(0) scale(0.5);}50%{opacity:var(--op,0.7);transform:translateY(-16px) scale(1);}}
+
+  /* ===== LETTER FOLD + FLY ===== */
+  .ghost-env{
+    position:absolute;bottom:26px;left:50%;z-index:3;
+    width:64px;height:44px;border-radius:5px;
+    background:linear-gradient(180deg,#f7e9db,#eed3bd);
+    box-shadow:0 8px 22px rgba(0,0,0,0.42), inset 0 0 0 1px rgba(120,70,40,0.16);
+    transform:translateX(-50%) scale(0.3);opacity:0;
+    transition:opacity 0.5s ease,transform 0.6s cubic-bezier(0.34,1.56,0.64,1);
+  }
+  .ghost-env::before{
+    content:'';position:absolute;inset:0;border-radius:5px;
+    background:linear-gradient(to top right,transparent 49%,rgba(140,90,50,0.22) 50%,transparent 51%),
+               linear-gradient(to top left,transparent 49%,rgba(140,90,50,0.22) 50%,transparent 51%);
+  }
+  .ghost-env.show{opacity:1;transform:translateX(-50%) scale(1);}
+  .ghost-env.catch{transform:translateX(-50%) scale(1.2);}
+
+  .fold-stage{
+    position:absolute;left:50%;top:50%;z-index:3;perspective:1100px;
+    transform:translate(-50%,-50%);opacity:0;pointer-events:none;
+    transition:transform 1s cubic-bezier(0.55,0,0.2,1),opacity 0.9s ease;
+  }
+  .fold-stage.show{opacity:1;}
+  .fold-letter{position:relative;width:190px;height:250px;transform-style:preserve-3d;}
+  .fold-letter .panel{
+    position:absolute;left:0;width:100%;height:33.34%;
+    background:linear-gradient(180deg,#fffdf8,#f5eddd);
+    box-shadow:inset 0 0 0 1px rgba(120,70,40,0.07);
+    background-image:repeating-linear-gradient(180deg,transparent 0px,transparent 26px,rgba(150,100,60,0.08) 27px);
+    transition:transform 0.8s cubic-bezier(0.6,0,0.3,1);
+  }
+  .fold-letter .panel.top{top:0;transform-origin:top center;}
+  .fold-letter .panel.mid{top:33.34%;display:flex;align-items:center;justify-content:center;color:#c08a62;font-size:1.5rem;}
+  .fold-letter .panel.bot{top:66.68%;transform-origin:bottom center;}
+  .fold-letter.folding .panel.top{transform:rotateX(180deg);}
+  .fold-letter.folding .panel.bot{transform:rotateX(-180deg);}
+
+  /* ===== ENVELOPE BUTTON (main page bottom-center) ===== */
+  .envelope-btn{
+    position:fixed;bottom:26px;left:50%;z-index:90;cursor:pointer;
+    background:none;border:none;font-family:inherit;
+    display:flex;flex-direction:column;align-items:center;gap:9px;
+    opacity:0;transform:translateX(-50%) translateY(18px);
+    transition:opacity 0.9s ease,transform 0.9s cubic-bezier(0.25,0.46,0.45,0.94);
+    pointer-events:none;
+  }
+  .envelope-btn.visible{opacity:1;transform:translateX(-50%) translateY(0);pointer-events:auto;}
+  .envelope-btn .env{
+    position:relative;width:64px;height:44px;border-radius:5px;
+    background:linear-gradient(180deg,#f8ebdd,#eed5be);
+    box-shadow:0 10px 24px rgba(90,50,25,0.28), inset 0 0 0 1px rgba(120,70,40,0.16);
+    animation:envFloat 3.2s ease-in-out infinite;
+  }
+  .envelope-btn .env::before{
+    content:'';position:absolute;inset:0;border-radius:5px;
+    background:linear-gradient(to top right,transparent 49%,rgba(140,90,50,0.2) 50%,transparent 51%),
+               linear-gradient(to top left,transparent 49%,rgba(140,90,50,0.2) 50%,transparent 51%);
+  }
+  .envelope-btn .env-flap{
+    position:absolute;top:0;left:0;width:100%;height:52%;border-radius:5px 5px 0 0;
+    background:linear-gradient(180deg,#f6e2cb,#eacba9);
+    clip-path:polygon(0 0,100% 0,50% 100%);
+    transform-origin:top center;
+    transition:transform 0.5s cubic-bezier(0.6,0,0.3,1);
+  }
+  .envelope-btn:hover .env-flap{transform:rotateX(55deg);}
+  .envelope-btn .env-seal{
+    position:absolute;top:50%;left:50%;transform:translate(-50%,-42%);
+    font-size:0.9rem;color:#c27a52;text-shadow:0 1px 2px rgba(255,255,255,0.5);
+  }
+  .envelope-btn .env-label{font-size:0.62rem;letter-spacing:4px;color:#a9714e;}
+  @keyframes envFloat{0%,100%{transform:translateY(0);}50%{transform:translateY(-6px);}}
+
+  /* ===== LETTER OVERLAY (separate page) ===== */
+  .letter-overlay{
+    position:fixed;inset:0;z-index:600;
+    background:radial-gradient(ellipse at 50% 0%,rgba(255,210,170,0.18) 0%,transparent 55%),
+               radial-gradient(ellipse at 18% 82%,rgba(190,120,80,0.22) 0%,transparent 55%),
+               radial-gradient(ellipse at 85% 30%,rgba(230,170,130,0.14) 0%,transparent 50%),
+               linear-gradient(180deg,#f6ebdd 0%,#efd9c2 24%,#e6c4a3 54%,#cfa279 80%,#b98158 100%);
+    overflow-y:auto;overflow-x:hidden;
+    opacity:0;pointer-events:none;transition:opacity 0.6s ease;
+  }
+  .letter-overlay.active{opacity:1;pointer-events:auto;}
+  .letter-overlay .letter-close{
+    position:fixed;top:18px;right:20px;width:44px;height:44px;border-radius:50%;
+    border:1px solid rgba(120,70,40,0.25);background:rgba(255,252,246,0.55);
+    color:#8a5a3a;font-size:1.5rem;line-height:1;cursor:pointer;z-index:5;
+    display:flex;align-items:center;justify-content:center;transition:all 0.3s;
+  }
+  .letter-overlay .letter-close:hover{background:rgba(255,252,246,0.92);transform:rotate(90deg);}
+
+  .letter-scroll{position:relative;min-height:100%;padding:110px 28px 130px;display:flex;flex-direction:column;align-items:center;}
+  .letter-scroll .letter-title{text-align:center;margin-bottom:64px;position:relative;z-index:2;}
+  .letter-scroll .letter-title h2{font-size:clamp(1.8rem,3vw,2.4rem);font-weight:400;letter-spacing:8px;color:#5a3724;}
+  .letter-scroll .letter-title .decorated-line{display:flex;align-items:center;justify-content:center;gap:10px;margin-top:14px;}
+  .letter-scroll .letter-title .decorated-line::before,
+  .letter-scroll .letter-title .decorated-line::after{content:'';width:28px;height:1px;background:#a9714e;}
+  .letter-scroll .letter-title .decorated-line span{font-size:0.62rem;letter-spacing:3px;color:#a9714e;}
+
+  .letter-paper{
+    position:relative;z-index:2;max-width:660px;width:100%;
+    background:linear-gradient(180deg,rgba(255,252,246,0.78) 0%,rgba(251,244,234,0.66) 100%);
+    border:1px solid rgba(120,70,40,0.14);
+    border-radius:6px;
+    box-shadow:0 20px 60px rgba(90,50,25,0.18),0 4px 14px rgba(90,50,25,0.08);
+    padding:58px 42px 62px;
+  }
+  .letter-paper::before{
+    content:'';position:absolute;inset:0;border-radius:6px;pointer-events:none;
+    background:repeating-linear-gradient(180deg,transparent 0px,transparent 38px,rgba(150,100,60,0.06) 39px);
+  }
+  .letter-seal{
+    position:relative;z-index:2;width:56px;height:56px;margin:0 auto 28px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    background:radial-gradient(circle at 35% 30%,#e8a06a,#b96a44);
+    color:#fff7ef;font-size:1.3rem;
+    box-shadow:0 4px 14px rgba(160,80,40,0.4),inset 0 0 0 3px rgba(255,240,220,0.35);
+  }
+  .letter-body{position:relative;z-index:2;}
+  .letter-body p{
+    font-size:clamp(0.98rem,1.6vw,1.1rem);color:#5a4233;line-height:2.1;
+    letter-spacing:1px;margin:0 0 1.5em;text-align:justify;
+    opacity:0;transform:translateY(22px);
+    transition:opacity 0.9s cubic-bezier(0.25,0.46,0.45,0.94),transform 0.9s cubic-bezier(0.25,0.46,0.45,0.94);
+  }
+  .letter-body p.visible{opacity:1;transform:translateY(0);}
+  .letter-body p:first-child{font-size:clamp(1.06rem,1.8vw,1.22rem);color:#6b4630;font-weight:400;}
+  .letter-sign{
+    position:relative;z-index:2;text-align:center;margin-top:2.6em;
+    font-size:clamp(1.4rem,2.6vw,1.8rem);letter-spacing:8px;color:#7a4a2c;
+    opacity:0;transform:translateY(18px);
+    transition:opacity 1s ease 0.1s,transform 1s ease 0.1s;
+  }
+  .letter-sign.visible{opacity:1;transform:translateY(0);}
+  .letter-sign::before,.letter-sign::after{content:'·';margin:0 16px;color:#c08a62;}
+
+  .letter-leaves{position:absolute;inset:0;z-index:1;pointer-events:none;overflow:hidden;}
+  .letter-leaf{position:absolute;pointer-events:none;animation:leafFloat 6s ease-in-out infinite;will-change:transform;}
+  @keyframes leafFloat{
+    0%,100%{transform:translateY(0) translateX(0) rotate(0deg);}
+    25%{transform:translateY(-14px) translateX(6px) rotate(8deg);}
+    50%{transform:translateY(-4px) translateX(-6px) rotate(-4deg);}
+    75%{transform:translateY(-20px) translateX(4px) rotate(6deg);}
+  }
+  @media(max-width:480px){
+    .letter-paper{padding:44px 24px 48px;}
+    .letter-body p{text-align:left;}
+    .letter-scroll{padding-top:90px;}
+  }
+</style>
+</head>
+<body>
+
+<!-- ============ 全站内容：未解锁前 display:none，不渲染也不下载 ============ -->
+<div id="siteContent" class="site-locked">
+<div class="hearts-bloom" id="heartsBloom"></div>
+<audio id="bgMusic" src="music.mp3" loop preload="none"></audio>
+<button class="music-btn" id="musicBtn" title="音乐">
+  <span class="note-icon">♪</span>
+  <span class="bars"><span></span><span></span><span></span><span></span></span>
+</button>
+<button class="envelope-btn" id="envelopeBtn" title="读信" aria-label="读信">
+  <span class="env">
+    <span class="env-flap"></span>
+    <span class="env-seal">♡</span>
+  </span>
+  <span class="env-label">信</span>
+</button>
+
+<!-- ==================== FAREWELL (after password) ==================== -->
+<div class="layer-farewell" id="layerFarewell">
+  <div class="farewell-bg" id="farewellBg"></div>
+  <div class="farewell-vignette"></div>
+  <div class="farewell-particles" id="farewellParticles"></div>
+  <div class="farewell-text" id="farewellText"></div>
+</div>
+
+<!-- ==================== LAYER 1: INTRO ==================== -->
+<div class="layer-intro" id="layerIntro">
+  <div class="intro-bg" id="introBg"></div>
+  <div class="intro-vignette"></div>
+  <span class="intro-decor">✦</span><span class="intro-decor">♡</span><span class="intro-decor">✿</span>
+  <span class="intro-decor">♡</span><span class="intro-decor">✦</span><span class="intro-decor">♡</span>
+  <div class="intro-text">
+    <p class="mini-hearts">♡ ✦ ♡</p>
+    <h1>我们俩</h1>
+    <p class="subtitle">在彼此身边 · 就是最好的时光</p>
+  </div>
+  <div class="scroll-prompt" id="scrollPrompt">
+    <span>向上滑动</span>
+    <div class="line"></div>
+  </div>
+</div>
+
+<!-- ==================== LAYER 2: CATEGORIES ==================== -->
+<div class="layer-categories" id="layerCategories">
+  <div class="section-title">
+    <h2>我们的故事</h2>
+    <div class="decorated-line"><span>♡</span></div>
+  </div>
+  <div class="categories-row" id="categoriesRow"></div>
+</div>
+<div class="layer-footer"><span class="end-heart">♡</span></div>
+
+<!-- ==================== LETTER OVERLAY (separate page) ==================== -->
+<div class="letter-overlay" id="letterOverlay">
+  <button class="letter-close" id="letterClose">&times;</button>
+  <div class="letter-scroll">
+  <div class="letter-leaves" id="letterLeaves"></div>
+  <div class="letter-title">
+    <h2>最后一封信</h2>
+    <div class="decorated-line"><span>Chapter 04 · 告别</span></div>
+  </div>
+  <div class="letter-paper">
+    <div class="letter-seal">♡</div>
+    <div class="letter-body" id="letterBody">
+      <p>秋，是心动相遇的季节。</p>
+      <p>秋，也是分手告别的时候。</p>
+      <p>我很喜欢这个季节，重庆没有春天，秋天也很短暂。但是这个季节的到来总是能带走所有的烦躁，带来清爽，更是带来了你。我很喜欢秋天。</p>
+      <p>当你看到这一封信的时候，我们应该已经分手了。或许很激烈，也或许很平淡，那时如何，现在的我也不曾预料。我只是清晰地认识到，我们应已经走到了我们情感的秋天了，再下去，或许只能是互相伤害的时候了。</p>
+      <p>“哈哈，这里！”你穿的是一身黑色上衣，推着好大的一个行李箱，更多的我记不清了。只记得你比视频中更精致的脸颊，更匀称的身材。我不记得很多很多，我记得你。我们都并不青涩，可那一刻的心动，是真的。</p>
+      <p>这段时间，我投入了全部的心意去相处，去好好的过好我们的每一天。去看第一次无人机表演，去洗第一次脚，去看第一场电影，去上第一次网吧，去压第一次马路，去旅第一次游……只是日子往下走，风里送来的不只是清爽与温柔，夹杂着些凉意，掺杂着不安，淤积着难过。我曾全身心的走进过这段时光，认真的接住了风的所有温柔，只是慢慢发觉，我们习惯迎着不一样的风。同一段路途里，你看见的风景，与我等候的光景，终究是不能长久重合。没有谁对谁错，只是我们，再难长久的共沐同一场秋风。</p>
+      <p>一起打游戏的碎片时光，闲聊的夜晚，无数个普通的日常，我都会收好，留在记忆里。我不会否定这段相遇，也不会抹去曾经的所有开心。</p>
+      <p>你以前总期待着我写下下一封信，我也早计划着下一封信。待到一周年的时候，生出了许多争执，拉扯与难以抚平的隔阂。那一封预备好的情书，终究是没送到你手里，最后的一封变成了用来道别的文字。</p>
+      <p>我喜欢秋天，但是她并不长远，总是带来一阵风后就默默离去。自此秋风起，山水各一程，愿你往后岁岁安然，岁岁顺遂，在往后的每一个秋天，都能收获安稳与温柔，得遇良人，岁岁无忧。</p>
+    </div>
+    <div class="letter-sign" id="letterSign">我们，再见了</div>
+  </div>
+  </div>
+</div>
+
+<!-- ==================== LAYER 3: SCATTERED GALLERY ==================== -->
+<div class="gallery-overlay" id="galleryOverlay">
+  <div class="overlay-header">
+    <button class="back-btn" id="overlayBack">&larr; 返回</button>
+    <div class="overlay-title"><h3 id="overlayTitle"></h3><span id="overlaySub"></span></div>
+    <div style="width:70px"></div>
+  </div>
+  <div class="scattered-wall" id="scatteredWall"></div>
+</div>
+
+<!-- ==================== PHOTO VIEWER ==================== -->
+<div class="photo-viewer" id="photoViewer">
+  <button class="close-btn" id="viewerClose">&times;</button>
+  <button class="nav-btn nav-prev" id="viewerPrev">&larr;</button>
+  <button class="nav-btn nav-next" id="viewerNext">&rarr;</button>
+  <span class="page-turn-hint" id="pageTurnHint">继续翻 &rarr;</span>
+  <img src="" alt="" id="viewerImg">
+</div>
+
+<!-- ==================== LAYER 4: ENDING PAGE ==================== -->
+<div id="endingCurtain">
+  <div class="curtain-panel left"></div>
+  <div class="curtain-panel right"></div>
+</div>
+<div class="layer-ending" id="layerEnding">
+  <div class="ending-content">
+    <span class="ornament">♡</span>
+    <h2>谢谢你</h2>
+    <div class="divider"></div>
+    <p class="message">
+      谢谢你陪我走过这一程<br>
+      往后的日子，都要好好的
+    </p>
+    <br>
+    <button class="back-link" id="endingBack">返回相册</button>
+  </div>
+</div>
+</div>
+<!-- ============ /#siteContent ============ -->
+
+<!-- ==================== PASSWORD GATE (最后渲染，永远压在最上层，且不透明) ==================== -->
+<div class="pw-gate" id="pwGate">
+  <div class="pw-bg" id="pwBg"></div>
+  <div class="pw-vignette"></div>
+  <div class="pw-card">
+    <p class="pw-hearts">♡ ✦ ♡</p>
+    <h2>我们俩</h2>
+    <p class="pw-sub">属于我们的秘密空间</p>
+    <div class="pw-input-row">
+      <input type="password" id="pwInput" placeholder="输入密码" maxlength="20" autocomplete="off">
+      <button id="pwBtn">↵</button>
+    </div>
+    <p class="pw-error" id="pwError"></p>
+  </div>
+</div>
+
+<script>
+(function() {
+  // ===== 加密照片（AES-256-GCM）=====
+  // 仓库里存的只有密文：每张图 = IV(12 字节) || 密文 + GCM tag(16 字节)。
+  // 密钥由密码经 PBKDF2-HMAC-SHA256（600000 轮）派生，只存在于内存。
+  // 密码不对 → 校验块解不开 → 拿不到密钥 → 所有照片都是解不开的乱码。
+  const ENC_DIR = 'enc';
+  const PBKDF2_ITER = 600000;
+  const SALT_B64 = "lqQZonazVa+nocYy0RoTIA==";
+  const VERIFY_IV_B64 = "EKBJvJrblRSVmGJl";
+  const VERIFY_CT_B64 = "s4viL8MCiGLgBjrSbetraChjOehR+mkkpOGd8GemCWbEzZ8=";
+  const PW_BG = "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDABUOEBIQDRUSERIYFhUZHzQiHx0dH0AuMCY0TENQT0tDSUhUXnlmVFlyWkhJaY9qcnyAh4iHUWWUn5ODnXmEh4L/2wBDARYYGB8cHz4iIj6CVklWgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoL/wAARCABOAFADASIAAhEBAxEB/8QAGgAAAwEBAQEAAAAAAAAAAAAAAQIDAAQFBv/EACQQAAMAAwACAgICAwAAAAAAAAABAgMRIRIxBEEyUSJCE2Fx/8QAFgEBAQEAAAAAAAAAAAAAAAAAAQAC/8QAFxEBAQEBAAAAAAAAAAAAAAAAABEBIf/aAAwDAQACEQMRAD8A+dn8ipFey30Y0jHsP9hZ/IZ+yQv2a1wFNIlWbvCzEbHxnb8b8KPOV0ujz8mpTSGaNP8AJk5LTU8OlW8vsW4SRYUXf6MnX7ERRLhpDN0mNk+R4/8ARX/GdnNbdPYRGvNVv2Iqf7MkFQxR5zPWmHyJNaGjoh048ilGrJ5c+iHd6G0ZhMo/jsdIaF1yNWoXQqxz565pEkhstqq4bEvK9CR8ddH4kdH+NePUQzSkRiN9Ys8Y9TqSbFkye6Kr0QnjKKvsg6ayxjyt+zly5ayP/QjAUIoaa8aTQiCSenOVPEmc+XInwngyJLVAzVP9QbvC5cm+EjNgFgV0tK1JOFplvokg1sGg7CJhTBZgAGMYgA0LdClMS2yRkt0OhG/FlI6gL//Z";
+
+  function b64ToBytes(s){const bin=atob(s);const u=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)u[i]=bin.charCodeAt(i);return u;}
+  const SALT=b64ToBytes(SALT_B64),VERIFY_IV=b64ToBytes(VERIFY_IV_B64),VERIFY_CT=b64ToBytes(VERIFY_CT_B64);
+
+  let photoKey=null;                 // 解锁成功后才被赋值
+  const urlCache=new Map();          // 文件名 -> 已解密的 blob URL（LRU）
+  const inflight=new Map();          // 文件名 -> 进行中的解密任务
+  const URL_CACHE_MAX=90;
+
+  async function derivePhotoKey(pw){
+    const base=await crypto.subtle.importKey('raw',new TextEncoder().encode(pw),'PBKDF2',false,['deriveBits']);
+    const bits=await crypto.subtle.deriveBits({name:'PBKDF2',salt:SALT,iterations:PBKDF2_ITER,hash:'SHA-256'},base,256);
+    return crypto.subtle.importKey('raw',bits,{name:'AES-GCM'},false,['decrypt']);
+  }
+  async function verifyKey(k){
+    try{await crypto.subtle.decrypt({name:'AES-GCM',iv:VERIFY_IV},k,VERIFY_CT);return true;}catch(e){return false;}
+  }
+  async function decryptPhoto(name){
+    const hit=urlCache.get(name);
+    if(hit){urlCache.delete(name);urlCache.set(name,hit);return hit;}   // LRU 触碰
+    if(inflight.has(name))return inflight.get(name);
+    const job=(async()=>{
+      const res=await fetch(ENC_DIR+'/'+encodeURIComponent(name)+'.bin');
+      if(!res.ok)throw new Error('HTTP '+res.status);
+      const buf=await res.arrayBuffer();
+      const plain=await crypto.subtle.decrypt({name:'AES-GCM',iv:new Uint8Array(buf,0,12)},photoKey,new Uint8Array(buf,12));
+      const url=URL.createObjectURL(new Blob([plain],{type:'image/jpeg'}));
+      urlCache.set(name,url);
+      if(urlCache.size>URL_CACHE_MAX){const old=urlCache.keys().next().value;URL.revokeObjectURL(urlCache.get(old));urlCache.delete(old);}
+      return url;
+    })();
+    inflight.set(name,job);
+    try{return await job;}finally{inflight.delete(name);}
+  }
+  async function setImg(el,name){
+    try{el.src=await decryptPhoto(name);return true;}catch(e){return false;}
+  }
+  async function setBg(el,name){
+    try{el.style.backgroundImage='url('+await decryptPhoto(name)+')';return true;}catch(e){return false;}
+  }
+  // 进入视口才解密下载（替代原来的 loading="lazy"）
+  const lazyDecryptIO=new IntersectionObserver(function(entries){
+    entries.forEach(function(en){
+      if(!en.isIntersecting)return;
+      const el=en.target;lazyDecryptIO.unobserve(el);
+      const ig=el.querySelector('img');
+      if(ig&&el.dataset.enc)setImg(ig,el.dataset.enc);
+    });
+  },{rootMargin:'400px'});
+
+  // ===== PASSWORD GATE =====
+  const pwGate = document.getElementById('pwGate');
+  const pwInput = document.getElementById('pwInput');
+  const pwBtn = document.getElementById('pwBtn');
+  const pwError = document.getElementById('pwError');
+
+  // 内容容器：解锁前 display:none（既防透图，也避免提前下载 160+ 张照片）
+  const siteContent = document.getElementById('siteContent');
+  let siteRevealed = false;
+  function revealSite(){
+    if (siteRevealed) return;
+    siteRevealed = true;
+    siteContent.classList.remove('site-locked');
+  }
+
+  // 不再持久化任何解锁凭证：密钥只存在于内存，刷新 / 新标签页都要重新输密码。
+  // 这样页面上任何第三方脚本都读不到可用于解密的材料。
+
+  let unlocking = false;
+  async function tryUnlock() {
+    const val = pwInput.value.trim();
+    if (!val || unlocking) return;
+    unlocking = true;
+    pwError.textContent = '正在解锁…';
+    try {
+      // PBKDF2 派生密钥（约几百毫秒），再用它去解校验块。
+      // 这一步同时完成「验证密码」和「拿到照片密钥」，密码不对就解不开。
+      const key = await derivePhotoKey(val);
+      if (!await verifyKey(key)) {
+        pwError.textContent = '密码不对哦';
+        pwInput.value = '';
+        pwInput.focus();
+        return;
+      }
+      pwError.textContent = '';   // 清掉「正在解锁…」
+      photoKey = key;
+      pwGate.classList.add('unlocked');
+      revealSite();          // 先揭开内容层（此时门还压在上层，看不穿）
+      paintIntroBg();        // 解密 intro 层背景
+      initSite();            // 再构建相册卡片（图片此刻才开始解密下载）
+      // 密码正确时触发音乐（此时有用户点击手势，浏览器允许播放）
+      tryPlayMusic();
+      startFarewell();
+    } catch (err) {
+      pwError.textContent = '解锁失败，请刷新重试';
+    } finally {
+      unlocking = false;
+    }
+  }
+
+  pwBtn.addEventListener('click', tryUnlock);
+  pwInput.addEventListener('keydown', e => {
+    if (e.key === 'Enter') tryUnlock();
+    pwError.textContent = '';
+  });
+
+  // ===== FAREWELL (after password) =====
+  const layerFarewell = document.getElementById('layerFarewell');
+  const farewellText = document.getElementById('farewellText');
+  const farewellParticles = document.getElementById('farewellParticles');
+  const envelopeBtn = document.getElementById('envelopeBtn');
+  const letterOverlay = document.getElementById('letterOverlay');
+  const letterClose = document.getElementById('letterClose');
+  let farewellPlayed = false;
+
+  const FAREWELL_LINES = [
+    { text: '你又来了啊宝宝，',              delay: 60, hold: 1200 },
+    { text: '可是我们这个时候，已经分手了吧。', delay: 55, hold: 1350 },
+    { text: '……还是很舍不得呢。',           delay: 65, hold: 1450 },
+    { text: '我有东西给你看哦。',            delay: 65, hold: 1500, emphasize: true }
+  ];
+
+  function startFarewell(){
+    if (farewellPlayed) return;
+    farewellPlayed = true;
+    layerFarewell.classList.add('active');
+    setBg(document.getElementById('farewellBg'), allFiles[BG_INDEX]);   // 分手层背景：解密后的真图
+    spawnFarewellParticles();
+    spawnDust();
+    setTimeout(runFarewellLines, 700);
+  }
+
+  function runFarewellLines(){
+    let li = 0;
+    function showNext(){
+      if (li >= FAREWELL_LINES.length){
+        playFoldFly(dismissFarewell);
+        return;
+      }
+      const ln = FAREWELL_LINES[li];
+      const el = document.createElement('div');
+      el.className = 'farewell-line' + (ln.emphasize ? ' emphasize' : '');
+      farewellText.appendChild(el);
+      let i = 0;
+      (function tick(){
+        if (i < ln.text.length){
+          const ch = document.createElement('span');
+          ch.className = 'ch';
+          ch.textContent = ln.text[i];
+          el.appendChild(ch);
+          i++;
+          setTimeout(tick, ln.delay);
+        } else {
+          setTimeout(() => {
+            el.classList.add('leaving');
+            setTimeout(() => { el.remove(); li++; showNext(); }, 650);
+          }, ln.hold);
+        }
+      })();
+    }
+    showNext();
+  }
+
+  function spawnFarewellParticles(){
+    const items = ['🍂','🍁','❋','·','✦','🍂','🍁','·'];
+    for (let i = 0; i < 22; i++){
+      const s = document.createElement('span');
+      s.className = 'farewell-particle';
+      s.textContent = items[Math.floor(Math.random()*items.length)];
+      const size = 8 + Math.random()*18;
+      s.style.cssText = `
+        left:${Math.random()*100}%;font-size:${size}px;
+        color:${['#e8b07a','#d79a63','#c98a5e','#efc99a'][Math.floor(Math.random()*4)]};
+        --op:${0.25+Math.random()*0.4};--sway:${(Math.random()*40-20).toFixed(0)}px;
+        animation-duration:${9+Math.random()*12}s;animation-delay:${Math.random()*10}s;
+      `;
+      farewellParticles.appendChild(s);
+    }
+  }
+
+  function spawnDust(){
+    for (let i = 0; i < 34; i++){
+      const d = document.createElement('span');
+      d.className = 'dust';
+      const size = 3 + Math.random()*7;
+      d.style.cssText = `
+        left:${Math.random()*100}%;top:${15+Math.random()*75}%;
+        width:${size}px;height:${size}px;
+        --op:${0.25+Math.random()*0.55};
+        animation-duration:${3.5+Math.random()*4.5}s;animation-delay:${Math.random()*5}s;
+      `;
+      farewellParticles.appendChild(d);
+    }
+  }
+
+  function playFoldFly(onDone){
+    const ghost = document.createElement('div');
+    ghost.className = 'ghost-env';
+    layerFarewell.appendChild(ghost);
+    const stage = document.createElement('div');
+    stage.className = 'fold-stage';
+    stage.innerHTML = '<div class="fold-letter"><div class="panel top"></div><div class="panel mid">♡</div><div class="panel bot"></div></div>';
+    layerFarewell.appendChild(stage);
+    const foldLetter = stage.querySelector('.fold-letter');
+
+    requestAnimationFrame(() => { stage.classList.add('show'); });
+
+    setTimeout(() => { foldLetter.classList.add('folding'); }, 520);
+
+    setTimeout(() => { ghost.classList.add('show'); }, 1300);
+
+    setTimeout(() => {
+      const h = window.innerHeight;
+      const dy = h/2 - 48;
+      stage.style.transform = `translate(-50%,-50%) translateY(${dy}px) scale(0.15) rotate(-10deg)`;
+      stage.style.opacity = '0';
+      ghost.classList.add('catch');
+      spawnBurst(window.innerWidth/2, h - 48, 20);
+    }, 1560);
+
+    setTimeout(() => { onDone && onDone(); }, 2600);
+  }
+
+  function dismissFarewell(){
+    layerFarewell.classList.remove('active');
+    layerFarewell.classList.add('dismissed');
+  }
+
+  function spawnBurst(x, y, count){
+    const host = document.getElementById('heartsBloom');
+    const glyphs = ['♡','❤','♥','✦','❋','·'];
+    for (let i = 0; i < count; i++){
+      const s = document.createElement('span');
+      s.textContent = glyphs[Math.floor(Math.random()*glyphs.length)];
+      const size = 10 + Math.random()*20;
+      const ang = Math.random()*Math.PI*2;
+      const dist = 40 + Math.random()*90;
+      s.style.cssText = `
+        position:absolute;left:${x}px;top:${y}px;font-size:${size}px;
+        color:hsl(${18+Math.random()*32},${55+Math.random()*30}%,${58+Math.random()*26}%);
+        pointer-events:none;
+        --bx:${Math.cos(ang)*dist}px;--by:${Math.sin(ang)*dist - 30}px;
+        --ex:${Math.cos(ang)*dist*2.2}px;--ey:${Math.sin(ang)*dist*2.2 - 70}px;
+        --rr:${(Math.random()-.5)*80}deg;--er:${(Math.random()-.5)*200}deg;
+        animation:heartBloom ${0.9+Math.random()*0.9}s cubic-bezier(0.22,0.61,0.36,1) forwards;
+      `;
+      host.appendChild(s);
+      (function(el){ setTimeout(() => el.remove(), 2200); })(s);
+    }
+  }
+
+  const allFiles = [
+    "微信图片_20260623114455_2_53.jpg",
+    "微信图片_20260623114506_3_53.jpg",
+    "微信图片_20260623114508_4_53.jpg",
+    "微信图片_20260623114511_5_53.jpg",
+    "微信图片_20260623114513_6_53.jpg",
+    "微信图片_20260623114515_7_53.jpg",
+    "微信图片_20260623114517_8_53.jpg",
+    "微信图片_20260623114518_9_53.jpg",
+    "微信图片_20260623114519_10_53.jpg",
+    "微信图片_20260623114522_11_53.jpg",
+    "微信图片_20260623114525_12_53.jpg",
+    "微信图片_20260623114527_13_53.jpg",
+    "微信图片_20260623114530_14_53.jpg",
+    "微信图片_20260623114532_15_53.jpg",
+    "微信图片_20260623114535_16_53.jpg",
+    "微信图片_20260623114537_17_53.jpg",
+    "微信图片_20260623114539_18_53.jpg",
+    "微信图片_20260623114541_19_53.jpg",
+    "微信图片_20260623114543_20_53.jpg",
+    "微信图片_20260623114545_21_53.jpg",
+    "微信图片_20260623114548_22_53.jpg",
+    "微信图片_20260623114549_23_53.jpg",
+    "微信图片_20260623114550_24_53.jpg",
+    "微信图片_20260623114553_25_53.jpg",
+    "微信图片_20260623114601_29_53.jpg",
+    "微信图片_20260623114604_30_53.jpg",
+    "微信图片_20260623114605_31_53.jpg",
+    "微信图片_20260623114607_32_53.jpg",
+    "微信图片_20260623114608_33_53.jpg",
+    "微信图片_20260623114609_34_53.jpg",
+    "微信图片_20260623114611_35_53.jpg",
+    "微信图片_20260623114612_36_53.jpg",
+    "微信图片_20260623114613_37_53.jpg",
+    "微信图片_20260623114614_38_53.jpg",
+    "微信图片_20260623114616_39_53.jpg",
+    "微信图片_20260623114616_40_53.jpg",
+    "微信图片_20260623114617_41_53.jpg",
+    "微信图片_20260623114618_42_53.jpg",
+    "微信图片_20260623114620_43_53.jpg",
+    "微信图片_20260623114621_44_53.jpg",
+    "微信图片_20260623114623_45_53.jpg",
+    "微信图片_20260623114624_46_53.jpg",
+    "微信图片_20260623114626_47_53.jpg",
+    "微信图片_20260623114627_48_53.jpg",
+    "微信图片_20260623114629_49_53.jpg",
+    "微信图片_20260623114631_50_53.jpg",
+    "微信图片_20260623114633_51_53.jpg",
+    "微信图片_20260623114634_52_53.jpg",
+    "微信图片_20260623114636_53_53.jpg",
+    "微信图片_20260623114639_54_53.jpg",
+    "微信图片_20260623114641_55_53.jpg",
+    "微信图片_20260623114643_56_53.jpg",
+    "微信图片_20260623114645_57_53.jpg",
+    "微信图片_20260623114647_58_53.jpg",
+    "微信图片_20260623114649_59_53.jpg",
+    "微信图片_20260623114651_60_53.jpg",
+    "微信图片_20260623114653_61_53.jpg",
+    "微信图片_20260623114655_62_53.jpg",
+    "微信图片_20260623114657_63_53.jpg",
+    "微信图片_20260623114658_64_53.jpg",
+    "微信图片_20260623114700_65_53.jpg",
+    "微信图片_20260623114702_66_53.jpg",
+    "微信图片_20260623114707_67_53.jpg",
+    "微信图片_20260623114714_68_53.jpg",
+    "微信图片_20260623114716_69_53.jpg",
+    "微信图片_20260623114718_70_53.jpg",
+    "微信图片_20260623114720_71_53.jpg",
+    "微信图片_20260623114722_72_53.jpg",
+    "微信图片_20260623114724_73_53.jpg",
+    "微信图片_20260623114726_74_53.jpg",
+    "微信图片_20260623114728_75_53.jpg",
+    "微信图片_20260623114730_76_53.jpg",
+    "微信图片_20260623114731_77_53.jpg",
+    "微信图片_20260623114733_78_53.jpg",
+    "微信图片_20260623114735_79_53.jpg",
+    "微信图片_20260623114736_80_53.jpg",
+    "微信图片_20260623114738_81_53.jpg",
+    "微信图片_20260623114740_82_53.jpg",
+    "微信图片_20260623114742_83_53.jpg",
+    "微信图片_20260623114744_84_53.jpg",
+    "微信图片_20260623114747_85_53.jpg",
+    "微信图片_20260623114749_86_53.jpg",
+    "微信图片_20260623114752_87_53.jpg",
+    "微信图片_20260623114754_88_53.jpg",
+    "微信图片_20260623114757_89_53.jpg",
+    "微信图片_20260623114759_90_53.jpg",
+    "微信图片_20260623114801_91_53.jpg",
+    "微信图片_20260623114804_92_53.jpg",
+    "微信图片_20260623114807_93_53.jpg",
+    "微信图片_20260623114810_94_53.jpg",
+    "微信图片_20260623114812_95_53.jpg",
+    "微信图片_20260623114815_96_53.jpg",
+    "微信图片_20260623114818_97_53.jpg",
+    "微信图片_20260623114821_98_53.jpg",
+    "微信图片_20260623114826_99_53.jpg",
+    "微信图片_20260623114830_100_53.jpg",
+    "微信图片_20260623114906_101_53.jpg",
+    "微信图片_20260623114908_102_53.jpg",
+    "微信图片_20260623114912_103_53.jpg",
+    "微信图片_20260623114915_104_53.jpg",
+    "微信图片_20260623114918_105_53.jpg",
+    "微信图片_20260623114921_106_53.jpg",
+    "微信图片_20260623114925_107_53.jpg",
+    "微信图片_20260623114928_108_53.jpg",
+    "微信图片_20260623114931_109_53.jpg",
+    "微信图片_20260623114935_110_53.jpg",
+    "微信图片_20260623114937_111_53.jpg",
+    "微信图片_20260623115228_112_53.jpg",
+    "微信图片_20260623115230_113_53.jpg",
+    "微信图片_20260623115232_114_53.jpg",
+    "微信图片_20260623115236_115_53.jpg",
+    "微信图片_20260623115238_116_53.jpg",
+    "微信图片_20260623115241_117_53.jpg",
+    "微信图片_20260623115244_118_53.jpg",
+    "微信图片_20260623115246_119_53.jpg",
+    "微信图片_20260623115250_120_53.jpg",
+    "微信图片_20260623115252_121_53.jpg",
+    "微信图片_20260623115255_122_53.jpg",
+    "微信图片_20260623115259_123_53.jpg",
+    "微信图片_20260623115301_124_53.jpg",
+    "微信图片_20260623115309_125_53.jpg",
+    "微信图片_20260623115313_126_53.jpg",
+    "微信图片_20260623115319_127_53.jpg",
+    "微信图片_20260623115327_128_53.jpg",
+    "微信图片_20260623115330_129_53.jpg",
+    "微信图片_20260623115332_130_53.jpg",
+    "微信图片_20260623115335_131_53.jpg",
+    "微信图片_20260623115337_132_53.jpg",
+    "微信图片_20260623115340_133_53.jpg",
+    "微信图片_20260623115343_134_53.jpg",
+    "微信图片_20260623115345_135_53.jpg",
+    "微信图片_20260623115348_136_53.jpg",
+    "微信图片_20260623115351_137_53.jpg",
+    "微信图片_20260623115354_138_53.jpg",
+    "微信图片_20260623115357_139_53.jpg",
+    "微信图片_20260623115359_140_53.jpg",
+    "微信图片_20260623115401_141_53.jpg",
+    "微信图片_20260623115403_142_53.jpg",
+    "微信图片_20260623115406_143_53.jpg",
+    "微信图片_20260623115408_144_53.jpg",
+    "微信图片_20260623115411_145_53.jpg",
+    "微信图片_20260623115414_146_53.jpg",
+    "微信图片_20260623115417_147_53.jpg",
+    "微信图片_20260623115420_148_53.jpg",
+    "微信图片_20260623115422_149_53.jpg",
+    "微信图片_20260623115424_150_53.jpg",
+    "微信图片_20260623115427_151_53.jpg",
+    "微信图片_20260623115429_152_53.jpg",
+    "微信图片_20260623115431_153_53.jpg",
+    "微信图片_20260623115435_154_53.jpg",
+    "微信图片_20260623115441_155_53.jpg",
+    "微信图片_20260623115446_156_53.jpg",
+    "微信图片_20260623115450_157_53.jpg",
+    "微信图片_20260623115454_158_53.jpg",
+    "微信图片_20260623115458_159_53.jpg",
+    "微信图片_20260623115502_160_53.jpg",
+    "微信图片_20260623115504_161_53.jpg",
+    "微信图片_20260623115605_162_53.jpg",
+    "微信图片_20260623115607_163_53.jpg",
+    "微信图片_20260623115610_164_53.jpg",
+    "微信图片_20260623115612_165_53.jpg",
+    "微信图片_20260623115614_166_53.jpg",
+    "微信图片_20260623115616_167_53.jpg",
+    "微信图片_20260623115617_168_53.jpg"
+  ];
+
+  const groups = {
+    chujian:    {name:'初见',  sub:'Chapter 01', start:0,  end:40},
+    zheshijian: {name:'这时间',sub:'Chapter 02', start:41, end:92},
+    lvxing:     {name:'旅行',  sub:'Chapter 03', start:93, end:162}
+  };
+  const BG_INDEX = 163;
+
+  // 密码页背景：内联的 80px 低清模糊图（看不出内容，也不额外发请求）
+  document.getElementById('pwBg').style.backgroundImage = `url(${PW_BG})`;
+  // intro 层背景：解锁后才解密真图
+  async function paintIntroBg(){
+    const el = document.getElementById('introBg');
+    if (el && photoKey) await setBg(el, allFiles[BG_INDEX]);
+  }
+
+  // Favorite photos
+  const FAVE_INDICES = new Set([7,14,33,49,87,100,113]);
+
+  function isFave(idx){return FAVE_INDICES.has(idx);}
+  const RATIOS = [1.3333,1.3333,1.3333,1.3333,1.3333,1.3333,1.3333,0.6671,1.3333,1.3333,1.3333,1.3333,1.3333,1.3333,1.3333,1.3333,1.3333,1.3333,1.3333,1.3333,1.3333,1.3333,1.3333,1.3333,1.3333,1.3333,1.3333,0.75,1.3333,0.6672,1.3333,0.6672,0.7332,1.3333,1.3333,1.3333,1.3333,1.3333,0.75,1.3333,1.3333,1.3333,1.3333,0.75,1.3333,1.3333,1.3333,0.5625,1.3333,1.3333,1.3333,1.3333,1.3333,1.3333,1.3333,1.3333,1.3333,1.3333,1.3333,1.3333,1.3333,1.3333,1.3333,1.3333,1.3333,1.3333,1.3333,1.3333,1.3333,1.3333,1.3333,1.3333,1.3333,1.3333,1.3333,1.3333,1.3333,1.3333,1.3333,1.3333,1.3333,1.3333,1.3333,1.3333,1.3333,1.3333,1.3333,1.3333,1.3333,1.3333,1.3333,1.3333,1.3333,1.3333,1.3333,1.3333,1.3333,1.3333,1.3333,1.3333,1.3333,1.3333,1.3333,1.3333,1.3333,1.3333,1.3333,0.75,1.3333,1.3333,1.3333,1.3333,1.3333,1.3333,1.3333,1.3333,1.3333,1.3333,1.3333,1.3333,1.3333,1.3333,1.3333,1.3333,1.3333,1.3333,1.3333,1.3333,1.3333,1.3333,1.3333,1.3333,1.3333,1.3333,1.3333,1.3333,1.3333,1.3333,1.3333,1.3333,1.3333,1.3333,1.3333,1.3333,1.3333,1.3333,1.3333,1.3333,1.3333,1.3333,1.3333,1.3333,1.3333,1.3333,1.3333,1.3333,1.3333,1.3333,1.3333,1.3333,1.3333,1.3333,1.3333,1.0287];
+
+  function getFiles(s,e){return allFiles.slice(s,e+1);}
+  function seededRandom(seed){let s=seed;return function(){s=(s*16807+0)%2147483647;return(s-1)/2147483646;};}
+
+  // ===== MUSIC =====
+  const bgMusic=document.getElementById('bgMusic'),musicBtn=document.getElementById('musicBtn');
+  let musicPlaying=false;
+  bgMusic.volume=0.55;
+  // 音频已改为 preload="none"：只有真正 play() 时才开始下载，
+  // 不再和照片抢带宽（原来 preload="auto" 会在打开页面时就拖走整个 mp3）
+  function tryPlayMusic(){
+    if(musicPlaying)return;
+    bgMusic.play().then(()=>{musicPlaying=true;musicBtn.classList.add('playing');}).catch(()=>{});
+  }
+
+  musicBtn.addEventListener('click',e=>{
+    e.stopPropagation();
+    if(musicPlaying){bgMusic.pause();musicPlaying=false;musicBtn.classList.remove('playing');}
+    else{bgMusic.volume=0.55;tryPlayMusic();}
+  });
+
+  // ===== LAYER 1: INTRO =====
+
+  const layerIntro=document.getElementById('layerIntro'),scrollPrompt=document.getElementById('scrollPrompt'),
+        heartsBloom=document.getElementById('heartsBloom');
+  let introDismissed=false;
+
+  function dismissIntro(){
+    if(introDismissed)return;introDismissed=true;
+    tryPlayMusic();
+    layerIntro.classList.add('dismissed');
+    envelopeBtn.classList.add('visible');
+    const w=window.innerWidth,h=window.innerHeight;
+    spawnHearts(w*.5,h*.5,25);
+    setTimeout(()=>{spawnHearts(w*.25,h*.35,15);spawnHearts(w*.75,h*.4,15);},180);
+    setTimeout(()=>{spawnHearts(w*.4,h*.3,18);spawnHearts(w*.6,h*.55,18);},360);
+  }
+
+  let wAcc=0;
+  window.addEventListener('wheel',e=>{if(!introDismissed&&(wAcc+=e.deltaY)>80)dismissIntro();},{passive:true});
+  let ts=0;
+  window.addEventListener('touchstart',e=>{if(!introDismissed)ts=e.touches[0].clientY;},{passive:true});
+  window.addEventListener('touchmove',e=>{if(!introDismissed&&ts-e.touches[0].clientY>50)dismissIntro();},{passive:true});
+  scrollPrompt.addEventListener('click',dismissIntro);
+  window.addEventListener('keydown',e=>{if(!introDismissed&&(e.key==='ArrowDown'||e.key==='ArrowUp'))dismissIntro();});
+
+  function spawnHearts(x,y,count){
+    const frag=document.createDocumentFragment();
+    for(let i=0;i<count;i++){
+      const el=document.createElement('span');
+      el.innerHTML=['&#9829;','&#9825;','&#10084;'][Math.floor(Math.random()*3)];
+      const s=10+Math.random()*26;
+      el.style.cssText=`position:absolute;left:${x}px;top:${y}px;font-size:${s}px;color:hsl(${340+Math.random()*30},${50+Math.random()*35}%,${50+Math.random()*35}%);pointer-events:none;--bx:${(Math.random()-.5)*70}px;--by:${-(20+Math.random()*55)}px;--ex:${(Math.random()-.5)*180}px;--ey:${-(80+Math.random()*230)}px;--rr:${(Math.random()-.5)*60}deg;--er:${(Math.random()-.5)*120}deg;animation:heartBloom ${1.2+Math.random()*1.8}s cubic-bezier(0.22,0.61,0.36,1) forwards;animation-delay:${Math.random()*.25}s;`;
+      el.dataset.born=Date.now();frag.appendChild(el);
+    }
+    heartsBloom.appendChild(frag);
+  }
+  setInterval(()=>{const n=Date.now();Array.from(heartsBloom.children).forEach(e=>{if(e.dataset.born&&n-Number(e.dataset.born)>3000)e.remove();});},2000);
+
+  // ===== LAYER 2: CATEGORY CARDS =====
+  const categoriesRow=document.getElementById('categoriesRow'),groupKeys=['chujian','zheshijian','lvxing'],
+        carouselTimers={},tapeColors=['#e8d5c8','#d4c5b8','#c9d4c0','#d8c8d4','#c8d0d8','#e0d0c0'],
+        marginDecors=['♡','✦','✿','♡','✧','♡','✦','✿','♡','✧','✦','♡','✿','✦','♡'];
+
+  const CAROUSEL_TEASERS = 6;   // 每张卡片只轮播 6 张「预告片」，而不是整组 40~70 张
+  let siteBuilt = false;
+
+  function initSite(){
+    if (siteBuilt) return;
+    siteBuilt = true;
+
+    const dc=document.createElement('div');
+    dc.style.cssText='position:absolute;inset:-40px -20px -20px -20px;pointer-events:none;z-index:0;';
+    for(let i=0;i<10;i++){
+      const d=document.createElement('span');d.className='margin-decor';d.textContent=marginDecors[i];
+      d.style.cssText=`top:${5+Math.random()*85}%;left:${2+Math.random()*94}%;font-size:${0.7+Math.random()*1.8}rem;animation-delay:${Math.random()*5}s;animation-duration:${3+Math.random()*6}s;opacity:${0.12+Math.random()*0.25};`;
+      dc.appendChild(d);
+    }
+    categoriesRow.appendChild(dc);
+
+    groupKeys.forEach((key,gi)=>{
+      const g=groups[key],files=getFiles(g.start,g.end),rand=seededRandom(gi*137+42),
+            rot=(rand()-.5)*5,t1=tapeColors[Math.floor(rand()*tapeColors.length)],t2=tapeColors[Math.floor(rand()*tapeColors.length)];
+      const card=document.createElement('div');
+      card.className='cat-card';card.style.setProperty('--rot',rot+'deg');
+      card.style.transitionDelay=(gi*.12)+'s';card.dataset.group=key;
+      card.innerHTML=`
+        <span class="paperclip">&#128206;</span>
+        <span class="tape tl" style="background:${t1};"></span>
+        <span class="tape tr" style="background:${t2};"></span>
+        <span class="tape br" style="background:${t1};"></span>
+        <div class="carousel"><img class="active" alt="" decoding="async" fetchpriority="high"><img alt="" decoding="async"></div>
+        <div class="card-label"><p class="chapter">${g.sub}</p><h3>${g.name}</h3><span class="count">${files.length} 张</span><p class="tap-hint">点击浏览全部 &rarr;</p></div>
+      `;
+      // 双缓冲轮播：DOM 里始终只有 2 个 <img>，只有轮到谁才去下载谁
+      const teasers=[];
+      for(let t=0;t<CAROUSEL_TEASERS;t++){teasers.push(files[Math.round(t*(files.length-1)/(CAROUSEL_TEASERS-1))]);}
+      const imgs=card.querySelectorAll('.carousel img');
+      let ci=0,front=0;
+      imgs[0].dataset.enc=teasers[0];setImg(imgs[0],teasers[0]);
+      carouselTimers[key]=setInterval(async ()=>{
+        ci=(ci+1)%teasers.length;
+        const backEl=imgs[1-front];
+        const name=teasers[ci];
+        const show=()=>{imgs[front].classList.remove('active');backEl.classList.add('active');front=1-front;};
+        if(backEl.dataset.enc===name){show();return;}
+        const ok=await setImg(backEl,name);
+        backEl.dataset.enc=name;
+        if(ok)show();               // 解密成功才切，避免闪一下空白
+      },2600);
+      card.addEventListener('click',()=>openGalleryOverlay(key));
+      categoriesRow.appendChild(card);
+    });
+
+    const io=new IntersectionObserver(entries=>{entries.forEach(e=>{if(e.isIntersecting){e.target.classList.add('visible');}});},{threshold:0.12,rootMargin:'0px 0px -20px 0px'});
+    document.querySelectorAll('.cat-card').forEach(c=>io.observe(c));
+
+    // Title reveal on curtain open
+    const titleH2=document.querySelector('.layer-categories .section-title h2');
+    const titleLine=document.querySelector('.layer-categories .section-title .decorated-line');
+    if(titleH2){setTimeout(()=>{titleH2.classList.add('visible');titleLine.classList.add('visible');},600);}
+  }
+
+  // ===== LAYER 3: SCATTERED GALLERY =====
+  const galleryOverlay=document.getElementById('galleryOverlay'),scatteredWall=document.getElementById('scatteredWall'),
+        overlayTitle=document.getElementById('overlayTitle'),overlaySub=document.getElementById('overlaySub'),
+        overlayBack=document.getElementById('overlayBack');
+  let currentOverlayGroup=null;
+
+  function openGalleryOverlay(groupKey){
+    const g=groups[groupKey],files=getFiles(g.start,g.end);
+    currentOverlayGroup=groupKey;
+    overlayTitle.textContent=g.name;overlaySub.textContent=`${g.sub} · ${files.length} 张照片`;
+    scatteredWall.innerHTML='';
+    const rand=seededRandom(groupKey.charCodeAt(0)*73+groupKey.length*29);
+
+    // ---- Build photo metadata (using real aspect ratios) ----
+    const polaroids = files.map((f,i)=>{
+      const globalIdx = g.start + i;
+      const ratio = RATIOS[globalIdx];
+      const fave = isFave(globalIdx);
+      // Faves distinctly larger, regulars with natural variety
+      let longSide;
+      if (fave) {
+        longSide = 295 + Math.floor(rand()*25);
+      } else if (globalIdx === 48) {
+        longSide = 205; // #52 smaller
+      } else if (globalIdx === 31) {
+        longSide = 265; // #35 larger
+      } else {
+        const t = Math.floor(rand()*4);
+        if (t===0)      longSide = 215;
+        else if (t===1) longSide = 230;
+        else if (t===2) longSide = 245;
+        else            longSide = 225;
+      }
+      let pw, ph;
+      if (ratio >= 1) {
+        pw = longSide;
+        ph = Math.round(pw / ratio);
+      } else {
+        ph = longSide;
+        pw = Math.round(ph * ratio);
+      }
+      const smaller = Math.min(pw, ph);
+      const pad = Math.round(smaller * 0.07);
+      const rot = (rand()-.5)*10;
+      const ty = 0; // let flexbox center handle vertical alignment
+      const delay = Math.min(i*0.02, 2.5);
+      return {f, globalIdx, pw, ph, pad, rot, ty, delay, fave};
+    });
+
+    // ---- Reorder: faves toward center for prominence ----
+    const faves = polaroids.filter(p => p.fave);
+    const regulars = polaroids.filter(p => !p.fave);
+    const reordered = [];
+    const total = polaroids.length;
+    const fCount = faves.length;
+    // Distribute faves into the middle ~60% of positions
+    const midStart = Math.floor(total * 0.2);
+    const midEnd = Math.floor(total * 0.8);
+    const midRange = midEnd - midStart;
+    const step = Math.max(1, Math.floor(midRange / (fCount + 1)));
+    let ri = 0, fi = 0;
+    for (let pos = 0; pos < total; pos++) {
+      const inMid = pos >= midStart && pos < midEnd;
+      const isFaveSlot = inMid && fi < fCount && ((pos - midStart) % step === 0);
+      if (isFaveSlot) {
+        reordered.push(faves[fi++]);
+      } else if (ri < regulars.length) {
+        reordered.push(regulars[ri++]);
+      } else if (fi < fCount) {
+        reordered.push(faves[fi++]);
+      }
+    }
+
+    // ---- Arrange into overlapping clusters ----
+    const clusters = [];
+    const source = reordered;
+    let i = 0;
+    while (i < source.length) {
+      const clusterSize = Math.min(2 + Math.floor(rand()*4), source.length - i);
+      const cluster = source.slice(i, i + clusterSize);
+      clusters.push(cluster);
+      i += clusterSize;
+    }
+
+    // Build DOM with overlap margins
+    clusters.forEach((cluster, ci) => {
+      cluster.forEach((p, pi) => {
+        const el = document.createElement('div');
+        el.className = 'polaroid';
+
+        // Overlap logic — negative margins for stacking
+        let ml = 6, mr = 6, mt = 8, mb = 8, zi = 1;
+        const myMax = Math.floor(p.pw * 0.20); // max 20% overlap
+
+        if (cluster.length > 1) {
+          if (pi === 0) {
+            ml = 8 + Math.floor(rand()*12);
+            mr = -(15 + Math.floor(rand() * Math.min(myMax - 15, 55)));
+            mt = 0; mb = 0;
+            zi = 5 + Math.floor(rand()*15);
+          } else if (pi === cluster.length - 1) {
+            ml = -(15 + Math.floor(rand() * Math.min(myMax - 15, 55)));
+            mr = 8 + Math.floor(rand()*12);
+            mt = 0; mb = 0;
+            zi = 2 + Math.floor(rand()*12);
+          } else {
+            ml = -(15 + Math.floor(rand() * Math.min(myMax - 15, 50)));
+            mr = -(15 + Math.floor(rand() * Math.min(myMax - 15, 50)));
+            mt = 0; mb = 0;
+            zi = 1 + Math.floor(rand()*20);
+          }
+        } else {
+          ml = 8 + Math.floor(rand()*16);
+          mr = 8 + Math.floor(rand()*16);
+          mt = 0; mb = 0;
+          zi = 3 + Math.floor(rand()*18);
+        }
+
+        ml = Math.max(ml, -myMax);
+        mr = Math.max(mr, -myMax);
+        if (pi > 0) { ml = Math.max(ml, -Math.floor(cluster[pi-1].pw * 0.20)); }
+        if (pi < cluster.length - 1) { mr = Math.max(mr, -Math.floor(cluster[pi+1].pw * 0.25)); }
+
+        if (pi === cluster.length - 1) mr = Math.max(mr, 16 + Math.floor(rand()*20));
+        if (pi === 0) ml = Math.max(ml, 10 + Math.floor(rand()*14));
+
+        const transformVal = `rotate(${p.rot.toFixed(1)}deg) translateY(${p.ty.toFixed(0)}px)`;
+
+        // No polaroid padding — just the image with an even thin border
+        el.style.cssText = `
+          transform:${transformVal};
+          --rot:${p.rot.toFixed(1)}deg;--ty:${p.ty.toFixed(0)}px;
+          --zi:${zi};--ad:${p.delay.toFixed(2)}s;
+          --pw:${p.pw}px;--ph:${p.ph}px;--pad:${p.pad}px;
+          margin-left:${ml}px;margin-right:${mr}px;
+          margin-top:${mt}px;margin-bottom:${mb}px;
+          z-index:${zi};
+        `;
+
+        const gimg=document.createElement('img');gimg.alt='';gimg.decoding='async';
+        el.appendChild(gimg);
+        el.dataset.enc=p.f;                 // 进入视口才解密下载
+        lazyDecryptIO.observe(el);
+        el.addEventListener('click', () => openPhotoViewer(groupKey, p.globalIdx - g.start));
+        scatteredWall.appendChild(el);
+      });
+    });
+
+    // ---- Background text layer (behind photos, visible in gaps) ----
+    const bgWords = [
+      '宝宝','爱你呀','一直在一起','Forever','我的唯一','每天想你',
+      '好喜欢你','只喜欢你','永远永远','(◕‿◕)','(｡♥‿♥｡)',
+      '在一起','不分离','抱抱','想你啦','My Love','命中注定',
+      '你是我的','小确幸','余生有你','(⁄ ⁄>⁄ω⁄<⁄ ⁄)','♡ 永远 ♡',
+      '♡','❤','✦','✿','♥','·','•','♡♡','✧','亲亲','牵手',
+      '属于我们','一辈子的','小太阳','温暖','陪伴','甜甜的'
+    ];
+    function cornerPos(){return rand()*0.22;} // tight corners 0-22%
+    function pickPos(){
+      const r = rand();
+      if (r < 0.35) return cornerPos();        // 35% top-left corner
+      if (r < 0.65) return 1-cornerPos();       // 30% bottom-right corner
+      if (r < 0.80) return cornerPos()*0.7+0.3; // 15% toward top-right
+      if (r < 0.92) return 1-(cornerPos()*0.7+0.3); // 12% toward bottom-left
+      return 0.3+rand()*0.4; // 8% sparse middle
+    }
+    for (let d = 0; d < 26; d++) {
+      const el = document.createElement('span');
+      el.className = 'bg-text';
+      el.textContent = bgWords[Math.floor(rand()*bgWords.length)];
+      el.style.cssText = `
+        left:${pickPos()*95}%;top:${pickPos()*95}%;
+        font-size:${0.65+rand()*1.5}rem;
+        color:rgba(210,170,160,${0.18+rand()*0.28});
+        --dr:${(rand()-0.5)*12}deg;
+        animation-delay:${rand()*7}s;
+        animation-duration:${7+rand()*7}s;
+      `;
+      scatteredWall.appendChild(el);
+    }
+
+    galleryOverlay.classList.add('active');document.body.style.overflow='hidden';
+  }
+
+  function closeGalleryOverlay(){galleryOverlay.classList.remove('active');document.body.style.overflow='';currentOverlayGroup=null;}
+  overlayBack.addEventListener('click',closeGalleryOverlay);
+
+  // ===== PHOTO VIEWER =====
+  const photoViewer=document.getElementById('photoViewer'),viewerImg=document.getElementById('viewerImg'),
+        viewerClose=document.getElementById('viewerClose'),viewerPrev=document.getElementById('viewerPrev'),
+        viewerNext=document.getElementById('viewerNext'),pageTurnHint=document.getElementById('pageTurnHint');
+  let viewerGroup=null,viewerIndex=0;
+
+  function updateViewerHint(){
+    if(!viewerGroup)return;
+    const files=getFiles(groups[viewerGroup].start,groups[viewerGroup].end);
+    pageTurnHint.classList.toggle('visible',viewerIndex===files.length-1);
+  }
+
+  let viewerToken=0;
+  async function paintViewer(){
+    if(!viewerGroup)return;
+    const tk=++viewerToken;                 // 快速连点时，只认最后一次
+    const files=getFiles(groups[viewerGroup].start,groups[viewerGroup].end);
+    const name=files[viewerIndex];
+    if(!urlCache.has(name))viewerImg.classList.add('switching');
+    const ok=await setImg(viewerImg,name);
+    if(tk!==viewerToken)return;
+    if(ok)viewerImg.classList.remove('switching');
+  }
+  function openPhotoViewer(groupKey,index){
+    viewerGroup=groupKey;viewerIndex=index;
+    photoViewer.classList.add('active');updateViewerHint();
+    paintViewer();
+  }
+  function closePhotoViewer(){photoViewer.classList.remove('active');viewerGroup=null;}
+  function navViewer(d){
+    if(!viewerGroup)return;
+    const files=getFiles(groups[viewerGroup].start,groups[viewerGroup].end);
+    const newIdx=viewerIndex+d;
+    // Past the last photo → trigger Layer 4
+    if(newIdx>=files.length){
+      closePhotoViewer();
+      setTimeout(()=>openEndingPage(),350);
+      return;
+    }
+    // Before first photo → wrap to last
+    if(newIdx<0){viewerIndex=files.length-1;}
+    else{viewerIndex=newIdx;}
+    viewerImg.classList.add('switching');
+    updateViewerHint();
+    setTimeout(()=>{paintViewer();},200);
+  }
+
+  viewerClose.addEventListener('click',closePhotoViewer);
+  viewerPrev.addEventListener('click',e=>{e.stopPropagation();navViewer(-1);});
+  viewerNext.addEventListener('click',e=>{e.stopPropagation();navViewer(1);});
+  photoViewer.addEventListener('click',e=>{if(e.target===photoViewer)closePhotoViewer();});
+
+  // ===== LAYER 4: PAGE TURN / ENDING =====
+  const endingCurtain=document.getElementById('endingCurtain'),layerEnding=document.getElementById('layerEnding'),
+        endingBack=document.getElementById('endingBack');
+  let endingOpen=false;
+
+  function openEndingPage(){
+    if(endingOpen)return;endingOpen=true;
+
+    // Show curtain + ending layer
+    endingCurtain.style.display='block';
+    endingCurtain.classList.remove('open');
+    layerEnding.classList.add('active');
+
+    // Force reflow then open curtain
+    endingCurtain.offsetHeight;
+    requestAnimationFrame(()=>{
+      endingCurtain.classList.add('open');
+    });
+    document.body.style.overflow='hidden';
+  }
+
+  function closeEndingPage(){
+    endingOpen=false;
+    endingCurtain.classList.remove('open');
+    layerEnding.classList.remove('active');
+    document.body.style.overflow='';
+    setTimeout(()=>{endingCurtain.style.display='none';},900);
+  }
+
+  endingBack.addEventListener('click',closeEndingPage);
+
+  // Also allow clicking the ending layer background to close
+  layerEnding.addEventListener('click',function(e){
+    if(e.target===layerEnding)closeEndingPage();
+  });
+
+  // Keyboard
+  window.addEventListener('keydown',e=>{
+    if(endingOpen){
+      if(e.key==='Escape')closeEndingPage();
+      return;
+    }
+    if(viewerGroup){
+      if(e.key==='Escape')closePhotoViewer();
+      if(e.key==='ArrowRight')navViewer(1);
+      if(e.key==='ArrowLeft')navViewer(-1);
+      return;
+    }
+    if(currentOverlayGroup&&e.key==='Escape')closeGalleryOverlay();
+  });
+
+  // Double-click layer 2 bg for hearts
+  document.getElementById('layerCategories').addEventListener('dblclick',function(e){
+    if(!e.target.closest('.cat-card'))spawnHearts(e.clientX,e.clientY,10);
+  });
+
+  // ===== LETTER REVEAL (autumn dusk) =====
+  const letterBody = document.getElementById('letterBody');
+  const letterSign = document.getElementById('letterSign');
+  const letterLeavesHost = document.getElementById('letterLeaves');
+  if (letterBody){
+    const revealEls = Array.from(letterBody.querySelectorAll('p'));
+    if (letterSign) revealEls.push(letterSign);
+    const lio = new IntersectionObserver(entries => {
+      entries.forEach(e => { if (e.isIntersecting){ e.target.classList.add('visible'); lio.unobserve(e.target); } });
+    }, {threshold: 0.12, rootMargin: '0px 0px -40px 0px'});
+    revealEls.forEach(el => lio.observe(el));
+  }
+  if (letterLeavesHost){
+    const leafGlyphs = ['🍂','🍁','🍂','🍁','❋','·','✦'];
+    for (let i = 0; i < 12; i++){
+      const s = document.createElement('span');
+      s.className = 'letter-leaf';
+      s.textContent = leafGlyphs[Math.floor(Math.random()*leafGlyphs.length)];
+      s.style.cssText = `
+        top:${5+Math.random()*88}%;left:${2+Math.random()*94}%;
+        font-size:${0.7+Math.random()*1.7}rem;
+        color:${['#c98a5e','#b9774a','#a9613f','#e0a878','#c68a55'][Math.floor(Math.random()*5)]};
+        opacity:${0.14+Math.random()*0.3};
+        animation-delay:${(Math.random()*6).toFixed(2)}s;
+        animation-duration:${(4+Math.random()*6).toFixed(2)}s;
+      `;
+      letterLeavesHost.appendChild(s);
+    }
+  }
+
+  // ===== LETTER OVERLAY OPEN / CLOSE =====
+  function openLetter(){
+    letterOverlay.classList.add('active');
+    document.body.style.overflow = 'hidden';
+  }
+  function closeLetter(){
+    letterOverlay.classList.remove('active');
+    document.body.style.overflow = '';
+  }
+  if (envelopeBtn) envelopeBtn.addEventListener('click', openLetter);
+  if (letterClose) letterClose.addEventListener('click', closeLetter);
+  window.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && letterOverlay.classList.contains('active')) closeLetter();
+  });
+
+  // 解密密钥只存在于内存，刷新 / 新标签页必须重新输入密码 —— 这里不再有任何免密入口。
+
+  console.log('♡ 向上滑动，开始你们的故事');
+})();
+</script>
+</body>
+</html>
